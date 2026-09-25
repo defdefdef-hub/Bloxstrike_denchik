@@ -1,3 +1,5 @@
+-- Danny's Cheats | Blox Strike | Full Build
+-- ESP + WH + Aim + Effects + Skin Changer
 if _G.DC_Cleanup then pcall(_G.DC_Cleanup) end
 _G.DC_Cleanup = nil
 
@@ -6,6 +8,7 @@ local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local Tween = game:GetService("TweenService")
 local HS = game:GetService("HttpService")
+local RS = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 local Cam = workspace.CurrentCamera
 
@@ -25,12 +28,10 @@ local Cfg = {
     HealthBar = true, HealthText = true, Distance = true, HeldWeapon = true, BombCarrier = true,
     CSW_Enabled = false, CSW_TeamCheck = false, CSW_MaxDist = 2000,
     CSW_BoxColor = Color3.fromRGB(0, 255, 0),
-    CSW_SkeletonColor = Color3.fromRGB(0, 255, 0),
     CSW_HPFullColor = Color3.fromRGB(80, 220, 80),
     CSW_HPLowColor = Color3.fromRGB(255, 60, 60),
-    CSW_TracerColor = Color3.fromRGB(0, 255, 0),
-    CSW_ShowBox = true, CSW_ShowSkeleton = true, CSW_ShowHP = true,
-    CSW_ShowTracer = true, CSW_ShowName = true, CSW_ShowDistance = true,
+    CSW_ShowBox = true, CSW_ShowHP = true,
+    CSW_ShowName = true, CSW_ShowDistance = true,
     CSW_Thickness = 1,
     EnemyColor = Color3.fromRGB(255,95,105), TeammateColor = Color3.fromRGB(87,181,255),
     InSightColor = Color3.fromRGB(115,238,159), TextColor = Color3.fromRGB(242,244,250),
@@ -41,6 +42,9 @@ local Cfg = {
     SilentHitChance = 100, SilentFOV = 150, SilentShowTarget = true,
     SilentPrediction = true, SilentBulletSpeed = 1000,
     EffectsNoFlash = false, EffectsNoSmoke = false,
+    SkinChangerEnabled = false, SkinChangerSkins = {},
+    KnifeChangerEnabled = false, KnifeChangerModel = "Skeleton Knife",
+    GloveChangerEnabled = false, GloveChangerModel = "Sports Gloves", GloveChangerGloves = {},
     GuiColor = Color3.fromRGB(100,130,255),
 }
 
@@ -89,7 +93,7 @@ local function cswTeamAllowed(p)
     return true
 end
 
--- OLD ESP
+-- ========== OLD ESP ==========
 local function getAnchor(model)
     if not model then return nil end
     for _, n in ipairs({"HumanoidRootPart","UpperTorso","Torso","Chest","Head","Root","Body"}) do
@@ -257,14 +261,6 @@ local function updateESP()
                     vis = not workspace:Raycast(Cam.CFrame.Position, a.Position - Cam.CFrame.Position, rp)
                 end
 
-                if vis and Cfg.VisibleColor then
-                    local rp = RaycastParams.new()
-                    rp.FilterType = Enum.RaycastFilterType.Exclude
-                    rp.FilterDescendantsInstances = {LP.Character}
-                    local hit = workspace:Raycast(Cam.CFrame.Position, a.Position - Cam.CFrame.Position, rp)
-                    if hit and hit.Instance:IsDescendantOf(c) then color = Cfg.InSightColor end
-                end
-
                 if e.HL then
                     e.HL.Enabled = vis and Cfg.Boxes
                     e.HL.FillColor = color
@@ -326,31 +322,12 @@ local function updateESP()
     end
 end
 
--- CS:GO WH
-local CSW_Bones = {
-    {"Head", "UpperTorso"},
-    {"UpperTorso", "LowerTorso"},
-    {"UpperTorso", "LeftUpperArm"},
-    {"LeftUpperArm", "LeftLowerArm"},
-    {"LeftLowerArm", "LeftHand"},
-    {"UpperTorso", "RightUpperArm"},
-    {"RightUpperArm", "RightLowerArm"},
-    {"RightLowerArm", "RightHand"},
-    {"LowerTorso", "LeftUpperLeg"},
-    {"LeftUpperLeg", "LeftLowerLeg"},
-    {"LeftLowerLeg", "LeftFoot"},
-    {"LowerTorso", "RightUpperLeg"},
-    {"RightUpperLeg", "RightLowerLeg"},
-    {"RightLowerLeg", "RightFoot"},
-}
-
+-- ========== CS:GO WH ==========
 local function cswHideAll(e)
     if not e then return end
     if e.BoxLines then for _, l in ipairs(e.BoxLines) do pcall(function() l.Visible = false end) end end
-    if e.SkeletonLines then for _, l in ipairs(e.SkeletonLines) do pcall(function() l.Visible = false end) end end
     pcall(function() e.HPBg.Visible = false end)
     pcall(function() e.HPFill.Visible = false end)
-    pcall(function() e.Tracer.Visible = false end)
     pcall(function() e.NameText.Visible = false end)
     pcall(function() e.DistText.Visible = false end)
 end
@@ -358,10 +335,8 @@ end
 local function cswDestroy(e)
     if not e then return end
     if e.BoxLines then for _, l in ipairs(e.BoxLines) do pcall(function() l:Remove() end) end end
-    if e.SkeletonLines then for _, l in ipairs(e.SkeletonLines) do pcall(function() l:Remove() end) end end
     pcall(function() e.HPBg:Remove() end)
     pcall(function() e.HPFill:Remove() end)
-    pcall(function() e.Tracer:Remove() end)
     pcall(function() e.NameText:Remove() end)
     pcall(function() e.DistText:Remove() end)
 end
@@ -370,7 +345,7 @@ local function cswRemove(player)
     local e = WH[player]
     if not e then return end
     cswHideAll(e)
-    cswDestroy(e)
+    task.defer(function() cswDestroy(e) end)
     WH[player] = nil
 end
 
@@ -378,7 +353,7 @@ local function cswCreate(player)
     if player == LP then return end
     if not matchChar(player) then return end
     if not Drawing or type(Drawing.new) ~= "function" then return end
-    local e = { BoxLines = {}, SkeletonLines = {} }
+    local e = { BoxLines = {} }
 
     for i = 1, 4 do
         local l = Drawing.new("Line")
@@ -387,15 +362,6 @@ local function cswCreate(player)
         l.Thickness = Cfg.CSW_Thickness
         l.Transparency = 1
         table.insert(e.BoxLines, l)
-    end
-
-    for i = 1, #CSW_Bones do
-        local l = Drawing.new("Line")
-        l.Visible = false
-        l.Color = Cfg.CSW_SkeletonColor
-        l.Thickness = Cfg.CSW_Thickness
-        l.Transparency = 1
-        table.insert(e.SkeletonLines, l)
     end
 
     local hpBg = Drawing.new("Square")
@@ -412,18 +378,11 @@ local function cswCreate(player)
     hpFill.Transparency = 1
     e.HPFill = hpFill
 
-    local tracer = Drawing.new("Line")
-    tracer.Visible = false
-    tracer.Color = Cfg.CSW_TracerColor
-    tracer.Thickness = Cfg.CSW_Thickness
-    tracer.Transparency = 1
-    e.Tracer = tracer
-
     local nameText = Drawing.new("Text")
     nameText.Visible = false
     nameText.Center = true
     nameText.Outline = true
-    nameText.OutlineColor = Cfg.OutlineColor
+    nameText.OutlineColor = Color3.new(0, 0, 0)
     nameText.Color = Cfg.TextColor
     nameText.Size = 14
     nameText.Font = 2
@@ -433,7 +392,7 @@ local function cswCreate(player)
     distText.Visible = false
     distText.Center = true
     distText.Outline = true
-    distText.OutlineColor = Cfg.OutlineColor
+    distText.OutlineColor = Color3.new(0, 0, 0)
     distText.Color = Cfg.TextColor
     distText.Size = 12
     distText.Font = 2
@@ -468,11 +427,9 @@ local function cswUpdate(player, e)
     pcall(function() extents = char:GetExtentsSize() end)
     if not extents then extents = Vector3.new(2, 6, 1) end
 
-    local modelHeight = extents.Y
     local center = hrp.Position
-
-    local headPos = center + Vector3.new(0, modelHeight / 2, 0)
-    local feetPos = center - Vector3.new(0, modelHeight / 2, 0)
+    local headPos = center + Vector3.new(0, extents.Y / 2, 0)
+    local feetPos = center - Vector3.new(0, extents.Y / 2, 0)
 
     local headScreen = cswWorldToScreen(headPos)
     local feetScreen = cswWorldToScreen(feetPos)
@@ -487,12 +444,20 @@ local function cswUpdate(player, e)
         return true
     end
 
-    local top = headScreen.Y
-    local bottom = feetScreen.Y
+    if not e.SmoothHead then
+        e.SmoothHead = headScreen
+        e.SmoothFeet = feetScreen
+    else
+        e.SmoothHead = e.SmoothHead:Lerp(headScreen, 0.3)
+        e.SmoothFeet = e.SmoothFeet:Lerp(feetScreen, 0.3)
+    end
+
+    local top = e.SmoothHead.Y
+    local bottom = e.SmoothFeet.Y
     local height = bottom - top
     local width = height * 0.55
-    local left = headScreen.X - width / 2
-    local right = headScreen.X + width / 2
+    local left = e.SmoothHead.X - width / 2
+    local right = e.SmoothHead.X + width / 2
 
     if Cfg.CSW_ShowBox then
         local corners = {
@@ -513,31 +478,6 @@ local function cswUpdate(player, e)
         for _, line in ipairs(e.BoxLines) do line.Visible = false end
     end
 
-    if Cfg.CSW_ShowSkeleton then
-        for i, bone in ipairs(CSW_Bones) do
-            local part1 = char:FindFirstChild(bone[1])
-            local part2 = char:FindFirstChild(bone[2])
-            local line = e.SkeletonLines[i]
-            if part1 and part2 then
-                local p1 = cswWorldToScreen(part1.Position)
-                local p2 = cswWorldToScreen(part2.Position)
-                if p1 and p2 then
-                    line.From = p1
-                    line.To = p2
-                    line.Color = Cfg.CSW_SkeletonColor
-                    line.Thickness = Cfg.CSW_Thickness
-                    line.Visible = true
-                else
-                    line.Visible = false
-                end
-            else
-                line.Visible = false
-            end
-        end
-    else
-        for _, line in ipairs(e.SkeletonLines) do line.Visible = false end
-    end
-
     if Cfg.CSW_ShowHP then
         local barX = right + 4
         local barW = 3
@@ -546,7 +486,7 @@ local function cswUpdate(player, e)
 
         e.HPBg.Size = Vector2.new(barW, barH)
         e.HPBg.Position = Vector2.new(barX, top)
-        e.HPBg.Color = Color3.fromRGB(0, 0, 0)
+        e.HPBg.Color = Color3.new(0, 0, 0)
         e.HPBg.Visible = true
 
         e.HPFill.Size = Vector2.new(barW, barH * hpPct)
@@ -556,18 +496,6 @@ local function cswUpdate(player, e)
     else
         e.HPBg.Visible = false
         e.HPFill.Visible = false
-    end
-
-    if Cfg.CSW_ShowTracer then
-        local origin = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y)
-        local target = Vector2.new((left + right) / 2, bottom)
-        e.Tracer.From = origin
-        e.Tracer.To = target
-        e.Tracer.Color = Cfg.CSW_TracerColor
-        e.Tracer.Thickness = Cfg.CSW_Thickness
-        e.Tracer.Visible = true
-    else
-        e.Tracer.Visible = false
     end
 
     if Cfg.CSW_ShowName then
@@ -589,7 +517,7 @@ local function cswUpdate(player, e)
     return true
 end
 
--- Effects
+-- ========== Effects ==========
 function Effects.UpdateNoFlash()
     if not Cfg.EffectsNoFlash then return end
     for _, obj in ipairs(game:GetService("Lighting"):GetChildren()) do
@@ -655,7 +583,7 @@ end
 
 Effects.Ready = true
 
--- Silent Aim
+-- ========== Silent Aim ==========
 local function aimAllowed()
     return State.Running and Aim.Ready and Cfg.SilentEnabled
         and not UIS:GetFocusedTextBox() and matchChar(LP) ~= nil
@@ -796,7 +724,251 @@ local function installSilent()
     if not ok then Aim.LastError = tostring(err) end
 end
 
--- Циклы
+-- ========== SKIN CHANGER ==========
+local SD = { SkinsRoot = nil, SkinSelections = {}, GloveSelections = {}, GloveFolders = {} }
+
+pcall(function()
+    SD.SkinsRoot = RS:FindFirstChild("Assets") and RS.Assets:FindFirstChild("Skins")
+end)
+
+if SD.SkinsRoot then
+    pcall(function()
+        for _, wf in ipairs(SD.SkinsRoot:GetChildren()) do
+            local skins = {}
+            for _, sf in ipairs(wf:GetChildren()) do
+                skins[#skins + 1] = sf.Name
+            end
+            table.sort(skins)
+            SD.SkinSelections[wf.Name] = skins
+        end
+        for _, folder in ipairs(SD.SkinsRoot:GetChildren()) do
+            if (folder.Name:match("Glove") or folder.Name:match("Gloves") or folder.Name == "Hand Wraps")
+               and not (folder.Name:match("T Glove") or folder.Name:match("CT Glove")) then
+                SD.GloveFolders[#SD.GloveFolders + 1] = folder
+            end
+        end
+    end)
+end
+
+for _, gf in ipairs(SD.GloveFolders) do
+    local skins = {"Default"}
+    for _, skin in ipairs(gf:GetChildren()) do
+        skins[#skins + 1] = skin.Name
+    end
+    SD.GloveSelections[gf.Name] = skins
+end
+
+for w, s in pairs(SD.SkinSelections) do
+    Cfg.SkinChangerSkins[w] = s[1] or "Default"
+end
+for _, gf in ipairs(SD.GloveFolders) do
+    Cfg.GloveChangerGloves[gf.Name] = "Default"
+end
+
+local function Checkknife(w)
+    if not w then return false end
+    return w == "CT Knife" or w == "T Knife" or w == "Knife"
+end
+
+local function SafeRequire(module)
+    if not module then return nil end
+    local ok, result = pcall(function() return require(module) end)
+    if ok and result and type(result) == "table" then return result end
+    return nil
+end
+
+local function InitSkinHooks()
+    if not hookfunction then return end
+    pcall(function()
+        local SM = RS:FindFirstChild("Database")
+            and RS.Database:FindFirstChild("Components")
+            and RS.Database.Components:FindFirstChild("Libraries")
+            and RS.Database.Components.Libraries:FindFirstChild("Skins")
+
+        local VM = RS:FindFirstChild("Classes")
+            and RS.Classes:FindFirstChild("WeaponComponent")
+            and RS.Classes.WeaponComponent:FindFirstChild("Classes")
+            and RS.Classes.WeaponComponent.Classes:FindFirstChild("Viewmodel")
+
+        if not SM or not VM then return end
+
+        local Sk = SafeRequire(SM)
+        local Vm = SafeRequire(VM)
+        if not Sk or not Vm then return end
+
+        local oGCM = Sk.GetCameraModel
+        if oGCM then
+            Sk.GetCameraModel = function(w, sk, ...)
+                if Cfg.KnifeChangerEnabled and w and Checkknife(w) then
+                    local nk = Cfg.KnifeChangerModel
+                    local ns = Cfg.SkinChangerSkins[nk] or "Vanilla"
+                    local ok, r = pcall(oGCM, nk, ns, ...)
+                    if ok and r then return r end
+                end
+                local ok, r = pcall(oGCM, w, sk, ...)
+                if ok then return r end
+                return nil
+            end
+        end
+
+        local oGChM = Sk.GetCharacterModel
+        if oGChM then
+            Sk.GetCharacterModel = function(w, sk, ...)
+                if Cfg.KnifeChangerEnabled and w and Checkknife(w) then
+                    local nk = Cfg.KnifeChangerModel
+                    local ns = Cfg.SkinChangerSkins[nk] or "Vanilla"
+                    local ok, r = pcall(oGChM, nk, ns, ...)
+                    if ok and r then return r end
+                end
+                local ok, r = pcall(oGChM, w, sk, ...)
+                if ok then return r end
+                return nil
+            end
+        end
+
+        local oVN = Vm.new
+        if oVN then
+            Vm.new = function(vc, w, sk, ...)
+                if Cfg.KnifeChangerEnabled and w and Checkknife(w) then
+                    local nk = Cfg.KnifeChangerModel
+                    local ns = Cfg.SkinChangerSkins[nk] or "Vanilla"
+                    local ok, r = pcall(oVN, vc, nk, ns, ...)
+                    if ok and r then return r end
+                end
+                local ok, r = pcall(oVN, vc, w, sk, ...)
+                if ok then return r end
+                return nil
+            end
+        end
+
+        if Sk.GetGloves then
+            local oGG = Sk.GetGloves
+            Sk.GetGloves = function(g, sk)
+                if Cfg.GloveChangerEnabled and Cfg.GloveChangerModel then
+                    local gm = Cfg.GloveChangerModel
+                    local ts = Cfg.GloveChangerGloves[gm] or "Default"
+                    local ok, r = pcall(oGG, gm, ts)
+                    if ok and r then return r end
+                end
+                local ok, r = pcall(oGG, g, sk)
+                if ok then return r end
+                return nil
+            end
+        end
+    end)
+end
+
+InitSkinHooks()
+
+local function GetWeaponModel()
+    local cam = workspace.CurrentCamera
+    if not cam then return nil end
+    for _, ch in pairs(cam:GetChildren()) do
+        if ch:IsA("Model") and ch.Name ~= "Arms" and ch.Name ~= "Viewmodel" then
+            return ch
+        end
+    end
+    return nil
+end
+
+local function ApplySkin()
+    if not SD.SkinsRoot then return end
+    local wm = GetWeaponModel()
+    if not wm then return end
+
+    local own = wm.Name
+    local ewn = own
+    local ca = false
+
+    if Checkknife(own) then
+        if Cfg.KnifeChangerEnabled then
+            ewn = Cfg.KnifeChangerModel
+            ca = true
+        end
+    else
+        if Cfg.SkinChangerEnabled then
+            ca = true
+        end
+    end
+
+    if not ca then return end
+
+    local sel = Cfg.SkinChangerSkins[ewn]
+    if not sel or sel == "Default" then return end
+
+    local wsf = SD.SkinsRoot:FindFirstChild(ewn)
+    if not wsf then return end
+    local sf = wsf:FindFirstChild(sel)
+    if not sf then return end
+    local cf = sf:FindFirstChild("Camera")
+    if not cf then return end
+    local fn = cf:FindFirstChild("Factory New")
+    if not fn then return end
+
+    for _, sa in pairs(fn:GetChildren()) do
+        if sa:IsA("SurfaceAppearance") then
+            local pt = wm:FindFirstChild(sa.Name, true)
+            if pt and (pt:IsA("BasePart") or pt:IsA("MeshPart")) then
+                for _, old in pairs(pt:GetChildren()) do
+                    if old:IsA("SurfaceAppearance") then old:Destroy() end
+                end
+                sa:Clone().Parent = pt
+            end
+        end
+    end
+end
+
+local function ApplyGloves()
+    if not Cfg.GloveChangerEnabled then return end
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+
+    local am
+    for _, ch in ipairs(cam:GetChildren()) do
+        if ch:IsA("Model") and (ch.Name:match("Arms") or ch:FindFirstChild("Right Arm")) then
+            am = ch
+            break
+        end
+    end
+    if not am then return end
+
+    local la = am:FindFirstChild("Left Arm")
+    local ra = am:FindFirstChild("Right Arm")
+    if not la or not ra then return end
+    local lg = la:FindFirstChild("Glove")
+    local rg = ra:FindFirstChild("Glove")
+    if not lg or not rg then return end
+
+    for _, old in pairs(lg:GetChildren()) do
+        if old:IsA("SurfaceAppearance") then old:Destroy() end
+    end
+    for _, old in pairs(rg:GetChildren()) do
+        if old:IsA("SurfaceAppearance") then old:Destroy() end
+    end
+
+    local sm = Cfg.GloveChangerModel
+    if not sm then return end
+    local sel = Cfg.GloveChangerGloves[sm]
+    if not sel or sel == "Default" then return end
+
+    local gsf = SD.SkinsRoot:FindFirstChild(sm)
+    if not gsf then return end
+    local sv = gsf:FindFirstChild(sel)
+    if not sv then return end
+    local cf = sv:FindFirstChild("Camera")
+    if not cf then return end
+    local fn = cf:FindFirstChild("Factory New")
+    if not fn then return end
+
+    for _, sa in pairs(fn:GetChildren()) do
+        if sa:IsA("SurfaceAppearance") then
+            sa:Clone().Parent = lg
+            sa:Clone().Parent = rg
+        end
+    end
+end
+
+-- ========== Циклы ==========
 task.spawn(function()
     while task.wait(0.05) do
         if not Cfg.SilentEnabled or not Aim.Ready then
@@ -855,9 +1027,22 @@ task.spawn(function()
     end
 end)
 
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            if Cfg.SkinChangerEnabled or Cfg.KnifeChangerEnabled then
+                ApplySkin()
+            end
+            if Cfg.GloveChangerEnabled then
+                ApplyGloves()
+            end
+        end)
+    end
+end)
+
 connect(Players.PlayerRemoving, function(p) destroyESP(p) cswRemove(p) end)
 
--- FOV Circle
+-- ========== FOV Circle ==========
 local aimGui = Instance.new("ScreenGui")
 aimGui.Name = "DC_FOV"
 aimGui.ResetOnSpawn = false
@@ -917,31 +1102,26 @@ connect(RunService.RenderStepped, function()
     end
 end)
 
--- GUI
+-- ========== GUI ==========
 local themeRefs = {}
 local function reg(o, r) table.insert(themeRefs, {obj=o, role=r}) end
 
 local function applyTheme()
     local ac = Cfg.GuiColor
-    local bgMain = Color3.fromRGB(15,15,18)
-    local bgSide = Color3.fromRGB(20,20,24)
-    local bgCard = Color3.fromRGB(26,26,32)
-    local bgInput = Color3.fromRGB(34,34,42)
-    local strokeC = Color3.fromRGB(45,45,55)
     for _, it in ipairs(themeRefs) do
         local o = it.obj
         if o and o.Parent then
             if it.role == "accent" then o.BackgroundColor3 = ac
-            elseif it.role == "bgMain" then o.BackgroundColor3 = bgMain
-            elseif it.role == "bgSide" then o.BackgroundColor3 = bgSide
-            elseif it.role == "bgCard" then o.BackgroundColor3 = bgCard
-            elseif it.role == "bgInput" then o.BackgroundColor3 = bgInput
-            elseif it.role == "stroke" then o.Color = strokeC
             elseif it.role == "textAccent" then o.TextColor3 = ac
+            elseif it.role == "bgInput" then o.BackgroundColor3 = Color3.fromRGB(34, 34, 42)
+            elseif it.role == "bgMain" then o.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+            elseif it.role == "bgSide" then o.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+            elseif it.role == "bgCard" then o.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+            elseif it.role == "stroke" then o.Color = Color3.fromRGB(45, 45, 55)
             elseif it.role == "scroll" then o.ScrollBarImageColor3 = ac
             elseif it.role == "toggleBg" then
                 local k = o:GetAttribute("Key")
-                if k and Cfg[k] then o.BackgroundColor3 = ac else o.BackgroundColor3 = bgInput end
+                if k and Cfg[k] then o.BackgroundColor3 = ac else o.BackgroundColor3 = Color3.fromRGB(34, 34, 42) end
             end
         end
     end
@@ -959,10 +1139,10 @@ local function buildGUI()
     local reopenBtn = Instance.new("TextButton")
     reopenBtn.Size = UDim2.new(0, 34, 0, 34)
     reopenBtn.Position = UDim2.new(0, 14, 0, 70)
-    reopenBtn.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    reopenBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     reopenBtn.BorderSizePixel = 0
     reopenBtn.Text = "+"
-    reopenBtn.TextColor3 = Color3.fromRGB(200,200,220)
+    reopenBtn.TextColor3 = Color3.fromRGB(200, 200, 220)
     reopenBtn.Font = Enum.Font.GothamBold
     reopenBtn.TextSize = 18
     reopenBtn.Visible = false
@@ -970,11 +1150,11 @@ local function buildGUI()
     reopenBtn.Parent = gui
 
     local rbc = Instance.new("UICorner")
-    rbc.CornerRadius = UDim.new(1,0)
+    rbc.CornerRadius = UDim.new(1, 0)
     rbc.Parent = reopenBtn
 
     local rbs = Instance.new("UIStroke")
-    rbs.Color = Color3.fromRGB(50,50,62)
+    rbs.Color = Color3.fromRGB(50, 50, 62)
     rbs.Thickness = 1
     rbs.Transparency = 0.2
     rbs.Parent = reopenBtn
@@ -1003,29 +1183,32 @@ local function buildGUI()
     local main = Instance.new("Frame")
     main.Size = UDim2.new(0, W, 0, H)
     main.Position = UDim2.new(0.5, -W/2, 0.5, -H/2)
-    main.BackgroundColor3 = Color3.fromRGB(15,15,18)
+    main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
     main.BorderSizePixel = 0
     main.Active = true
     main.Draggable = true
     main.ClipsDescendants = true
     main.Parent = gui
+    reg(main, "bgMain")
 
     local mainC = Instance.new("UICorner")
     mainC.CornerRadius = UDim.new(0, 10)
     mainC.Parent = main
 
     local mainS = Instance.new("UIStroke")
-    mainS.Color = Color3.fromRGB(45,45,55)
+    mainS.Color = Color3.fromRGB(45, 45, 55)
     mainS.Thickness = 1
     mainS.Transparency = 0.2
     mainS.Parent = main
+    reg(mainS, "stroke")
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 38)
-    header.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    header.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     header.BorderSizePixel = 0
     header.ZIndex = 2
     header.Parent = main
+    reg(header, "bgSide")
 
     local hC = Instance.new("UICorner")
     hC.CornerRadius = UDim.new(0, 10)
@@ -1034,10 +1217,11 @@ local function buildGUI()
     local hFix = Instance.new("Frame")
     hFix.Size = UDim2.new(1, 0, 0, 12)
     hFix.Position = UDim2.new(0, 0, 1, -12)
-    hFix.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    hFix.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     hFix.BorderSizePixel = 0
     hFix.ZIndex = 2
     hFix.Parent = header
+    reg(hFix, "bgSide")
 
     local stripe = Instance.new("Frame")
     stripe.Size = UDim2.new(0, 3, 0, 18)
@@ -1046,18 +1230,18 @@ local function buildGUI()
     stripe.BorderSizePixel = 0
     stripe.ZIndex = 3
     stripe.Parent = header
+    reg(stripe, "accent")
 
     local stripeC = Instance.new("UICorner")
-    stripeC.CornerRadius = UDim.new(1,0)
+    stripeC.CornerRadius = UDim.new(1, 0)
     stripeC.Parent = stripe
-    reg(stripe, "accent")
 
     local titleLbl = Instance.new("TextLabel")
     titleLbl.Size = UDim2.new(0, 200, 1, 0)
     titleLbl.Position = UDim2.new(0, 24, 0, 0)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = "Danny's Cheats"
-    titleLbl.TextColor3 = Color3.fromRGB(240,240,250)
+    titleLbl.TextColor3 = Color3.fromRGB(240, 240, 250)
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 13
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1067,15 +1251,16 @@ local function buildGUI()
     local minBtn = Instance.new("TextButton")
     minBtn.Size = UDim2.new(0, 26, 0, 26)
     minBtn.Position = UDim2.new(1, -34, 0.5, -13)
-    minBtn.BackgroundColor3 = Color3.fromRGB(35,35,42)
+    minBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
     minBtn.BorderSizePixel = 0
     minBtn.Text = "-"
-    minBtn.TextColor3 = Color3.fromRGB(220,220,235)
+    minBtn.TextColor3 = Color3.fromRGB(220, 220, 235)
     minBtn.Font = Enum.Font.GothamBold
     minBtn.TextSize = 15
     minBtn.AutoButtonColor = false
     minBtn.ZIndex = 3
     minBtn.Parent = header
+    reg(minBtn, "bgInput")
 
     local mC = Instance.new("UICorner")
     mC.CornerRadius = UDim.new(0, 6)
@@ -1084,10 +1269,11 @@ local function buildGUI()
     local sidebar = Instance.new("Frame")
     sidebar.Size = UDim2.new(0, 120, 1, -48)
     sidebar.Position = UDim2.new(0, 6, 0, 42)
-    sidebar.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     sidebar.BorderSizePixel = 0
     sidebar.ZIndex = 1
     sidebar.Parent = main
+    reg(sidebar, "bgSide")
 
     local sbC = Instance.new("UICorner")
     sbC.CornerRadius = UDim.new(0, 8)
@@ -1107,10 +1293,11 @@ local function buildGUI()
     local content = Instance.new("Frame")
     content.Size = UDim2.new(1, -136, 1, -48)
     content.Position = UDim2.new(0, 130, 0, 42)
-    content.BackgroundColor3 = Color3.fromRGB(26,26,32)
+    content.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
     content.BorderSizePixel = 0
     content.ZIndex = 1
     content.Parent = main
+    reg(content, "bgCard")
 
     local contC = Instance.new("UICorner")
     contC.CornerRadius = UDim.new(0, 8)
@@ -1121,7 +1308,7 @@ local function buildGUI()
     tabTitle.Position = UDim2.new(0, 14, 0, 6)
     tabTitle.BackgroundTransparency = 1
     tabTitle.Text = "ESP"
-    tabTitle.TextColor3 = Color3.fromRGB(240,240,250)
+    tabTitle.TextColor3 = Color3.fromRGB(240, 240, 250)
     tabTitle.Font = Enum.Font.GothamBold
     tabTitle.TextSize = 13
     tabTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -1130,9 +1317,10 @@ local function buildGUI()
     local divider = Instance.new("Frame")
     divider.Size = UDim2.new(1, -28, 0, 1)
     divider.Position = UDim2.new(0, 14, 0, 34)
-    divider.BackgroundColor3 = Color3.fromRGB(45,45,55)
+    divider.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
     divider.BorderSizePixel = 0
     divider.Parent = content
+    reg(divider, "stroke")
 
     local scroll = Instance.new("ScrollingFrame")
     scroll.Size = UDim2.new(1, -20, 1, -48)
@@ -1141,9 +1329,10 @@ local function buildGUI()
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 3
     scroll.ScrollBarImageColor3 = Cfg.GuiColor
-    scroll.CanvasSize = UDim2.new()
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     scroll.Parent = content
+    reg(scroll, "scroll")
 
     local scrollL = Instance.new("UIListLayout")
     scrollL.Padding = UDim.new(0, 4)
@@ -1157,11 +1346,11 @@ local function buildGUI()
         for n, f in pairs(tabs) do f.Visible = (n == name) end
         for n, b in pairs(tabButtons) do
             local active = (n == name)
-            b.BackgroundColor3 = active and Color3.fromRGB(34,34,42) or Color3.fromRGB(20,20,24)
+            b.BackgroundColor3 = active and Color3.fromRGB(34, 34, 42) or Color3.fromRGB(20, 20, 24)
             local bar = b:FindFirstChild("ActiveBar")
             if bar then bar.Visible = active end
             local lbl = b:FindFirstChildOfClass("TextLabel")
-            if lbl then lbl.TextColor3 = active and Color3.fromRGB(240,240,250) or Color3.fromRGB(160,160,180) end
+            if lbl then lbl.TextColor3 = active and Color3.fromRGB(240, 240, 250) or Color3.fromRGB(160, 160, 180) end
         end
         tabTitle.Text = name
     end
@@ -1169,7 +1358,7 @@ local function buildGUI()
     local function makeTabBtn(name)
         local b = Instance.new("TextButton")
         b.Size = UDim2.new(1, 0, 0, 28)
-        b.BackgroundColor3 = Color3.fromRGB(20,20,24)
+        b.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
         b.BorderSizePixel = 0
         b.Text = ""
         b.AutoButtonColor = false
@@ -1187,18 +1376,18 @@ local function buildGUI()
         bar.BorderSizePixel = 0
         bar.Visible = false
         bar.Parent = b
+        reg(bar, "accent")
 
         local barC = Instance.new("UICorner")
-        barC.CornerRadius = UDim.new(1,0)
+        barC.CornerRadius = UDim.new(1, 0)
         barC.Parent = bar
-        reg(bar, "accent")
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(1, -14, 1, 0)
         lbl.Position = UDim2.new(0, 12, 0, 0)
         lbl.BackgroundTransparency = 1
         lbl.Text = name
-        lbl.TextColor3 = Color3.fromRGB(160,160,180)
+        lbl.TextColor3 = Color3.fromRGB(160, 160, 180)
         lbl.Font = Enum.Font.Gotham
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1247,23 +1436,23 @@ local function buildGUI()
     local function toggle(parent, txt, key, cb)
         local row = Instance.new("TextButton")
         row.Size = UDim2.new(1, 0, 0, 30)
-        row.BackgroundColor3 = Color3.fromRGB(30,30,38)
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
         row.BorderSizePixel = 0
         row.Text = ""
         row.AutoButtonColor = false
         row.Parent = parent
+        reg(row, "bgInput")
 
         local c = Instance.new("UICorner")
         c.CornerRadius = UDim.new(0, 6)
         c.Parent = row
-        reg(row, "bgInput")
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(1, -50, 1, 0)
         lbl.Position = UDim2.new(0, 12, 0, 0)
         lbl.BackgroundTransparency = 1
         lbl.Text = txt
-        lbl.TextColor3 = Color3.fromRGB(225,225,235)
+        lbl.TextColor3 = Color3.fromRGB(225, 225, 235)
         lbl.Font = Enum.Font.Gotham
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1272,31 +1461,31 @@ local function buildGUI()
         local tg = Instance.new("Frame")
         tg.Size = UDim2.new(0, 30, 0, 16)
         tg.Position = UDim2.new(1, -42, 0.5, -8)
-        tg.BackgroundColor3 = Cfg[key] and Cfg.GuiColor or Color3.fromRGB(55,55,68)
+        tg.BackgroundColor3 = Cfg[key] and Cfg.GuiColor or Color3.fromRGB(55, 55, 68)
         tg.BorderSizePixel = 0
         tg.Parent = row
-
-        local tgc = Instance.new("UICorner")
-        tgc.CornerRadius = UDim.new(1,0)
-        tgc.Parent = tg
         tg:SetAttribute("Key", key)
         reg(tg, "toggleBg")
 
         local knob = Instance.new("Frame")
         knob.Size = UDim2.new(0, 12, 0, 12)
         knob.Position = Cfg[key] and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
-        knob.BackgroundColor3 = Color3.new(1,1,1)
+        knob.BackgroundColor3 = Color3.new(1, 1, 1)
         knob.BorderSizePixel = 0
         knob.Parent = tg
 
         local kc = Instance.new("UICorner")
-        kc.CornerRadius = UDim.new(1,0)
+        kc.CornerRadius = UDim.new(1, 0)
         kc.Parent = knob
 
         row.MouseButton1Click:Connect(function()
             Cfg[key] = not Cfg[key]
-            Tween:Create(tg, TweenInfo.new(0.15), {BackgroundColor3 = Cfg[key] and Cfg.GuiColor or Color3.fromRGB(55,55,68)}):Play()
-            Tween:Create(knob, TweenInfo.new(0.15), {Position = Cfg[key] and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)}):Play()
+            Tween:Create(tg, TweenInfo.new(0.15), {
+                BackgroundColor3 = Cfg[key] and Cfg.GuiColor or Color3.fromRGB(55, 55, 68)
+            }):Play()
+            Tween:Create(knob, TweenInfo.new(0.15), {
+                Position = Cfg[key] and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
+            }):Play()
             if cb then cb() end
         end)
     end
@@ -1304,21 +1493,21 @@ local function buildGUI()
     local function slider(parent, txt, key, mn, mx, step)
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 42)
-        row.BackgroundColor3 = Color3.fromRGB(30,30,38)
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
         row.BorderSizePixel = 0
         row.Parent = parent
+        reg(row, "bgInput")
 
         local c = Instance.new("UICorner")
         c.CornerRadius = UDim.new(0, 6)
         c.Parent = row
-        reg(row, "bgInput")
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(1, -60, 0, 16)
         lbl.Position = UDim2.new(0, 12, 0, 4)
         lbl.BackgroundTransparency = 1
         lbl.Text = txt
-        lbl.TextColor3 = Color3.fromRGB(225,225,235)
+        lbl.TextColor3 = Color3.fromRGB(225, 225, 235)
         lbl.Font = Enum.Font.Gotham
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1339,12 +1528,12 @@ local function buildGUI()
         local bar = Instance.new("Frame")
         bar.Size = UDim2.new(1, -24, 0, 5)
         bar.Position = UDim2.new(0, 12, 0, 28)
-        bar.BackgroundColor3 = Color3.fromRGB(50,50,62)
+        bar.BackgroundColor3 = Color3.fromRGB(50, 50, 62)
         bar.BorderSizePixel = 0
         bar.Parent = row
 
         local bc = Instance.new("UICorner")
-        bc.CornerRadius = UDim.new(1,0)
+        bc.CornerRadius = UDim.new(1, 0)
         bc.Parent = bar
 
         local fill = Instance.new("Frame")
@@ -1354,7 +1543,7 @@ local function buildGUI()
         fill.Parent = bar
 
         local fc = Instance.new("UICorner")
-        fc.CornerRadius = UDim.new(1,0)
+        fc.CornerRadius = UDim.new(1, 0)
         fc.Parent = fill
         reg(fill, "accent")
 
@@ -1387,21 +1576,21 @@ local function buildGUI()
     local function optionRow(parent, txt, key, opts)
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 54)
-        row.BackgroundColor3 = Color3.fromRGB(30,30,38)
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
         row.BorderSizePixel = 0
         row.Parent = parent
+        reg(row, "bgInput")
 
         local c = Instance.new("UICorner")
         c.CornerRadius = UDim.new(0, 6)
         c.Parent = row
-        reg(row, "bgInput")
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(1, -20, 0, 16)
         lbl.Position = UDim2.new(0, 12, 0, 4)
         lbl.BackgroundTransparency = 1
         lbl.Text = txt
-        lbl.TextColor3 = Color3.fromRGB(225,225,235)
+        lbl.TextColor3 = Color3.fromRGB(225, 225, 235)
         lbl.Font = Enum.Font.Gotham
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1459,14 +1648,14 @@ local function buildGUI()
     local function colorRow(parent, lblTxt, setter)
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 54)
-        row.BackgroundColor3 = Color3.fromRGB(30,30,38)
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
         row.BorderSizePixel = 0
         row.Parent = parent
+        reg(row, "bgInput")
 
         local c = Instance.new("UICorner")
         c.CornerRadius = UDim.new(0, 6)
         c.Parent = row
-        reg(row, "bgInput")
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(1, -20, 0, 16)
@@ -1509,7 +1698,83 @@ local function buildGUI()
         end
     end
 
-    -- ESP
+    local function skinDropdown(parent, txt, values, getter, setter)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 60)
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        row.BorderSizePixel = 0
+        row.Parent = parent
+        reg(row, "bgInput")
+
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, 6)
+        c.Parent = row
+
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -20, 0, 18)
+        lbl.Position = UDim2.new(0, 12, 0, 4)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = txt
+        lbl.TextColor3 = Color3.fromRGB(225, 225, 235)
+        lbl.Font = Enum.Font.Gotham
+        lbl.TextSize = 11
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.Parent = row
+
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, -24, 0, 26)
+        holder.Position = UDim2.new(0, 12, 0, 26)
+        holder.BackgroundTransparency = 1
+        holder.Parent = row
+
+        local hl = Instance.new("UIListLayout")
+        hl.FillDirection = Enum.FillDirection.Horizontal
+        hl.Padding = UDim.new(0, 4)
+        hl.Parent = holder
+
+        local btns = {}
+        local function refresh()
+            local cur = getter()
+            for _, b in ipairs(btns) do
+                if b.Val == cur then
+                    b.Btn.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+                    b.Btn.TextColor3 = Color3.new(1,1,1)
+                else
+                    b.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56)
+                    b.Btn.TextColor3 = Color3.fromRGB(170,170,190)
+                end
+            end
+        end
+
+        local shown = 0
+        for _, v in ipairs(values) do
+            if shown >= 4 then break end
+            shown = shown + 1
+            local b = Instance.new("TextButton")
+            b.Size = UDim2.new(0, 70, 1, 0)
+            b.BackgroundColor3 = Color3.fromRGB(45,45,56)
+            b.BorderSizePixel = 0
+            b.Text = v
+            b.TextColor3 = Color3.fromRGB(170,170,190)
+            b.Font = Enum.Font.GothamBold
+            b.TextSize = 9
+            b.AutoButtonColor = false
+            b.Parent = holder
+
+            local bc = Instance.new("UICorner")
+            bc.CornerRadius = UDim.new(0, 5)
+            bc.Parent = b
+
+            table.insert(btns, {Btn=b, Val=v})
+            b.MouseButton1Click:Connect(function()
+                setter(v)
+                refresh()
+            end)
+        end
+        refresh()
+    end
+
+    -- ESP вкладка
     local espTab = makeTab("ESP")
     section(espTab, "ESP")
     toggle(espTab, "ESP", "ESPEnabled")
@@ -1517,7 +1782,6 @@ local function buildGUI()
     toggle(espTab, "Враги", "ShowEnemies")
     toggle(espTab, "Скрыть союзников", "TeamCheck")
     toggle(espTab, "Проверка видимости", "VisibilityCheck")
-    toggle(espTab, "Красить видимых", "VisibleColor")
     section(espTab, "Инфо")
     toggle(espTab, "Имя", "Names")
     toggle(espTab, "HP", "HealthBar")
@@ -1530,20 +1794,18 @@ local function buildGUI()
     section(espTab, "Цвета ESP")
     colorRow(espTab, "Враги", function(c) Cfg.EnemyColor = c end)
     colorRow(espTab, "Союзники", function(c) Cfg.TeammateColor = c end)
-    colorRow(espTab, "В прицеле", function(c) Cfg.InSightColor = c end)
 
-    section(espTab, "CS:GO WH (Drawing)")
-    toggle(espTab, "Wallhack вкл", "CSW_Enabled")
+    section(espTab, "CS:GO WH")
+    toggle(espTab, "Wallhack включён", "CSW_Enabled")
     toggle(espTab, "Куб", "CSW_ShowBox")
-    toggle(espTab, "Скелет", "CSW_ShowSkeleton")
     toggle(espTab, "HP полоса", "CSW_ShowHP")
-    toggle(espTab, "Трассер", "CSW_ShowTracer")
     toggle(espTab, "Имя WH", "CSW_ShowName")
     toggle(espTab, "Дистанция WH", "CSW_ShowDistance")
     toggle(espTab, "Скрыть союзников WH", "CSW_TeamCheck")
     slider(espTab, "Дальность WH", "CSW_MaxDist", 100, 5000, 100)
+    colorRow(espTab, "Цвет WH", function(c) Cfg.CSW_BoxColor = c end)
 
-    -- AIM
+    -- AIM вкладка
     local aimTab = makeTab("AIM")
     section(aimTab, "Silent Aim")
     toggle(aimTab, "Aim", "SilentEnabled")
@@ -1560,43 +1822,75 @@ local function buildGUI()
     slider(aimTab, "Шанс", "SilentHitChance", 1, 100, 1)
     slider(aimTab, "Скорость пули", "SilentBulletSpeed", 200, 3000, 100)
 
-    -- Effects
-    local effectsTab = makeTab("Effects")
-    section(effectsTab, "Эффекты")
+    -- Effects вкладка
+    local effectsTab = makeTab("EFFECTS")
+    section(effectsTab, "Визуальные")
     toggle(effectsTab, "No Flash", "EffectsNoFlash")
     toggle(effectsTab, "No Smoke", "EffectsNoSmoke")
 
-    -- Visuals
-    local visualTab = makeTab("Visuals")
+    -- Skins вкладка
+    local skinsTab = makeTab("SKINS")
+    section(skinsTab, "Skin Changer")
+    toggle(skinsTab, "Включить скины", "SkinChangerEnabled")
+
+    local weaponOrder = {"AK-47", "M4A4", "M4A1-S", "AWP", "AUG", "FAMAS", "Glock", "USP-S", "P250", "Desert Eagle"}
+    for _, w in ipairs(weaponOrder) do
+        local skins = SD.SkinSelections[w]
+        if skins then
+            skinDropdown(skinsTab, w, skins,
+                function() return Cfg.SkinChangerSkins[w] or skins[1] end,
+                function(v) Cfg.SkinChangerSkins[w] = v end)
+        end
+    end
+
+    section(skinsTab, "Нож")
+    toggle(skinsTab, "Включить нож", "KnifeChangerEnabled")
+    local KM = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
+    optionRow(skinsTab, "Модель", "KnifeChangerModel", KM)
+    for _, kn in ipairs(KM) do
+        local ks = SD.SkinSelections[kn]
+        if ks then
+            skinDropdown(skinsTab, kn .. " скин", ks,
+                function() return Cfg.SkinChangerSkins[kn] or "Vanilla" end,
+                function(v) Cfg.SkinChangerSkins[kn] = v end)
+        end
+    end
+
+    section(skinsTab, "Перчатки")
+    toggle(skinsTab, "Включить перчатки", "GloveChangerEnabled")
+    local GM = {}
+    for k in pairs(SD.GloveSelections) do GM[#GM + 1] = k end
+    table.sort(GM)
+    if #GM > 0 then
+        optionRow(skinsTab, "Модель", "GloveChangerModel", GM)
+    end
+    for _, gn in ipairs(GM) do
+        local gs = SD.GloveSelections[gn]
+        if gs then
+            skinDropdown(skinsTab, gn .. " скин", gs,
+                function() return Cfg.GloveChangerGloves[gn] or "Default" end,
+                function(v) Cfg.GloveChangerGloves[gn] = v end)
+        end
+    end
+
+    -- Visuals вкладка
+    local visualTab = makeTab("VISUALS")
     section(visualTab, "Тема")
-    colorRow(visualTab, "Цвет темы", function(c)
+    colorRow(visualTab, "Цвет меню", function(c)
         Cfg.GuiColor = c
         task.spawn(applyTheme)
         stripe.BackgroundColor3 = c
         fovStroke.Color = c
-        for _, it in ipairs(themeRefs) do
-            if it.obj and it.obj.Parent then
-                if it.role == "textAccent" then
-                    it.obj.TextColor3 = c
-                elseif it.role == "toggleBg" then
-                    local k = it.obj:GetAttribute("Key")
-                    if k and Cfg[k] then
-                        it.obj.BackgroundColor3 = c
-                    end
-                elseif it.role == "accent" then
-                    it.obj.BackgroundColor3 = c
-                end
-            end
-        end
     end)
 
-    local miscTab = makeTab("Misc")
+    -- Misc
+    local miscTab = makeTab("MISC")
     section(miscTab, "Инфо")
     local infoLbl = Instance.new("TextLabel")
-    infoLbl.Size = UDim2.new(1, 0, 0, 60)
+    infoLbl.Size = UDim2.new(1, 0, 0, 70)
     infoLbl.BackgroundColor3 = Color3.fromRGB(30,30,38)
     infoLbl.BorderSizePixel = 0
-    infoLbl.Text = "Left Alt - открыть/закрыть\n+ перетаскивается\nDanny's Cheats"
+    infoLbl.Text = "Danny's Cheats\nESP + WH + Aim + Effects + Skins\nLeft Alt — открыть/закрыть\n+ перетаскивается"
     infoLbl.TextColor3 = Color3.fromRGB(180,180,200)
     infoLbl.Font = Enum.Font.Gotham
     infoLbl.TextSize = 10
@@ -1612,12 +1906,12 @@ local function buildGUI()
     local function minimize()
         if isMin then return end
         isMin = true
-        Tween:Create(main, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, W, 0, 0)}):Play()
+        Tween:Create(main, TweenInfo.new(0.22), {Size = UDim2.new(0, W, 0, 0)}):Play()
         task.wait(0.22)
         main.Visible = false
         reopenBtn.Visible = true
         reopenBtn.Size = UDim2.new(0, 0, 0, 0)
-        Tween:Create(reopenBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 34, 0, 34)}):Play()
+        Tween:Create(reopenBtn, TweenInfo.new(0.3), {Size = UDim2.new(0, 34, 0, 34)}):Play()
     end
     local function maximize()
         if not isMin then return end
@@ -1625,7 +1919,7 @@ local function buildGUI()
         reopenBtn.Visible = false
         main.Visible = true
         main.Size = UDim2.new(0, W, 0, 0)
-        Tween:Create(main, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, W, 0, H)}):Play()
+        Tween:Create(main, TweenInfo.new(0.28), {Size = UDim2.new(0, W, 0, H)}):Play()
     end
 
     minBtn.MouseButton1Click:Connect(minimize)
@@ -1634,27 +1928,24 @@ local function buildGUI()
     UIS.InputBegan:Connect(function(i, gp)
         if gp then return end
         if i.KeyCode == Enum.KeyCode.LeftAlt then
-            if main.Visible then
-                minimize()
-            else
-                maximize()
-            end
+            if main.Visible then minimize() else maximize() end
         end
     end)
 
-    currentTab = "ESP"
     switchTab("ESP")
+    applyTheme()
 
     _G.DC_Cleanup = function()
+        for p, _ in pairs(ESPs) do destroyESP(p) end
+        for p, _ in pairs(WH) do cswRemove(p) end
         pcall(function() gui:Destroy() end)
     end
-    applyTheme()
-    stripe.BackgroundColor3 = Cfg.GuiColor
 end
 
 installSilent()
 buildGUI()
 
 print("[Danny's Cheats] ESP: OK")
-print("[Danny's Cheats] CS:GO WH: OK")
 print("[Danny's Cheats] Aim: " .. (Aim.Ready and "OK" or "FAIL"))
+print("[Danny's Cheats] Skins: " .. (SD.SkinsRoot and ("OK (" .. #SD.SkinsRoot:GetChildren() .. " категорий)") or "Skins не найдены"))
+print("[Danny's Cheats] hookfunction: " .. (hookfunction and "OK" or "не поддерживается"))
