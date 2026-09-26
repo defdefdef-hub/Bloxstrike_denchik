@@ -1,4 +1,74 @@
+-- Обёртка для показа ошибок на экране (для телефона)
+local __gui = Instance.new("ScreenGui")
+__gui.Name = "DeNsI_Errors"
+__gui.ResetOnSpawn = false
+__gui.DisplayOrder = 999
+pcall(function() __gui.Parent = game:GetService("CoreGui") end)
+if not __gui.Parent then
+    __gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local __frame = Instance.new("Frame")
+__frame.Size = UDim2.new(0, 400, 0, 260)
+__frame.Position = UDim2.new(0.5, -200, 0, 60)
+__frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+__frame.BorderSizePixel = 2
+__frame.BorderColor3 = Color3.fromRGB(255, 60, 60)
+__frame.Parent = __gui
+
+local __title = Instance.new("TextLabel")
+__title.Size = UDim2.new(1, 0, 0, 24)
+__title.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+__title.BorderSizePixel = 0
+__title.Text = "  DeNsI: Ошибка"
+__title.TextColor3 = Color3.new(1,1,1)
+__title.Font = Enum.Font.GothamBold
+__title.TextSize = 14
+__title.TextXAlignment = Enum.TextXAlignment.Left
+__title.Parent = __frame
+
+local __scroll = Instance.new("ScrollingFrame")
+__scroll.Size = UDim2.new(1, -10, 1, -34)
+__scroll.Position = UDim2.new(0, 5, 0, 29)
+__scroll.BackgroundTransparency = 1
+__scroll.BorderSizePixel = 0
+__scroll.ScrollBarThickness = 4
+__scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+__scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+__scroll.Parent = __frame
+
+local __layout = Instance.new("UIListLayout")
+__layout.Padding = UDim.new(0, 2)
+__layout.SortOrder = Enum.SortOrder.LayoutOrder
+__layout.Parent = __scroll
+
+local __hasError = false
+local function __log(msg, isErr)
+    if isErr then __hasError = true end
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 0, 16)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = tostring(msg)
+    lbl.TextColor3 = isErr and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
+    lbl.Font = Enum.Font.Code
+    lbl.TextSize = 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextWrapped = true
+    lbl.Parent = __scroll
+    print(msg)
+end
+
+__log("[DeNsI] Обёртка активна", false)
+
+-- === Оборачиваем ВЕСЬ остальной скрипт в pcall ===
+local __ok, __err = pcall(function()
+
+-- === НАЧАЛО ТВОЕГО СКРИПТА ===
 --[[
+    DeNsI v3 — Blox Strike
+    Executor: Arceus X Neo
+    Single-file build
+]]--[[
     DeNsI v3 — Blox Strike
     Executor: Arceus X Neo
     Single-file build
@@ -989,3 +1059,21 @@ end
 print("[DeNsI] v3 загружен успешно")
 print("[DeNsI] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
 print("[DeNsI] Bullet module: " .. (Bullet and "OK" or "FAIL"))
+-- === КОНЕЦ ТВОЕГО СКРИПТА ===
+
+end)  -- конец pcall
+
+if not __ok then
+    __log("[CRASH] " .. tostring(__err), true)
+    warn("[DeNsI] CRASH: " .. tostring(__err))
+else
+    __log("[OK] Скрипт загружен без ошибок", false)
+end
+
+-- Автоудаление панели через 30 сек, если ошибок не было
+task.spawn(function()
+    task.wait(30)
+    if not __hasError then
+        pcall(function() __gui:Destroy() end)
+    end
+end)
