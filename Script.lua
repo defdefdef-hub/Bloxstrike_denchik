@@ -1,4 +1,4 @@
---[[ DeNsI v8 — Full Script (Part 1 + Part 2) ]]
+--[[ DeNsI v9 — Full Script ]]
 
 local __dgui = Instance.new("ScreenGui")
 __dgui.Name = "DeNsI_Diag"
@@ -21,7 +21,7 @@ local __dtitle = Instance.new("TextLabel")
 __dtitle.Size = UDim2.new(1, 0, 0, 24)
 __dtitle.BackgroundColor3 = Color3.fromRGB(100, 130, 255)
 __dtitle.BorderSizePixel = 0
-__dtitle.Text = "  DeNsI v8 — загрузка"
+__dtitle.Text = "  DeNsI v9 — загрузка"
 __dtitle.TextColor3 = Color3.new(1,1,1)
 __dtitle.Font = Enum.Font.GothamBold
 __dtitle.TextSize = 14
@@ -855,7 +855,7 @@ local titleLbl = Instance.new("TextLabel")
 titleLbl.Size = UDim2.new(1, -100, 1, 0)
 titleLbl.Position = UDim2.new(0, 14, 0, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text = "DeNsI v8"
+titleLbl.Text = "DeNsI v9"
 titleLbl.TextColor3 = Color3.fromRGB(240,240,250)
 titleLbl.Font = Enum.Font.GothamBold
 titleLbl.TextSize = 14
@@ -1326,7 +1326,9 @@ toggle(miscTab, "Anti-Flashbang", "Antiflashbang")
 section(miscTab, "Skybox")
 toggle(miscTab, "Enable Skybox", "EnableSkybox")
 
--- Skin categories
+-- ============================================================
+-- ЕДИНАЯ ВКЛАДКА SKINS
+-- ============================================================
 local CATEGORIES = {
     {Name = "Пистолеты", Items = {"Desert Eagle","Dual Berettas","Five-SeveN","Glock-18","P250","R8 Revolver","Tec-9","USP-S"}},
     {Name = "ПП", Items = {"MAC-10","MP9","MP7","MP5-SD","P90","UMP-45"}},
@@ -1339,6 +1341,11 @@ local CATEGORIES = {
     {Name = "Гранаты", Items = {"C4","Decoy Grenade","Flashbang","HE Grenade","Incendiary Grenade","Molotov","Smoke Grenade","Zeus x27"}},
 }
 
+local skinsTab = makeTab("SKINS")
+
+section(skinsTab, "Общее")
+toggle(skinsTab, "Enable Skin Changer", "SkinChangerEnabled")
+
 for _, cat in ipairs(CATEGORIES) do
     local availableItems = {}
     for _, item in ipairs(cat.Items) do
@@ -1347,15 +1354,11 @@ for _, cat in ipairs(CATEGORIES) do
         end
     end
     if #availableItems > 0 then
-        local tab = makeTab(cat.Name)
-        section(tab, cat.Name .. " (" .. #availableItems .. ")")
-        if cat.Name == "Пистолеты" then
-            toggle(tab, "Enable Skin Changer", "SkinChangerEnabled")
-        end
+        section(skinsTab, cat.Name .. " (" .. #availableItems .. ")")
         for _, w in ipairs(availableItems) do
             local skins = SkinData.SkinSelections[w]
             if skins then
-                skinRow(tab, w, skins,
+                skinRow(skinsTab, w, skins,
                     function() return Cfg.Skins[w] or findDefaultSkin(w) end,
                     function(v) Cfg.Skins[w] = v end)
             end
@@ -1363,19 +1366,114 @@ for _, cat in ipairs(CATEGORIES) do
     end
 end
 
--- Knife Model
-local knifeTab = makeTab("Knife Model")
-section(knifeTab, "Knife Changer")
-toggle(knifeTab, "Enable Knife Changer", "KnifeChangerEnabled")
+-- Knife Changer (внутри SKINS)
+section(skinsTab, "Knife Changer")
+toggle(skinsTab, "Enable Knife Changer", "KnifeChangerEnabled")
 
--- Gloves Model
-local glovesTab = makeTab("Gloves Model")
-section(glovesTab, "Gloves Changer")
-toggle(glovesTab, "Enable Gloves Changer", "GloveChangerEnabled")
+local kOpts = {"Karambit","Butterfly Knife","Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife","Stiletto Knife","CT Knife","T Knife","LightSaber"}
+local kRow = Instance.new("Frame")
+kRow.Size = UDim2.new(1, 0, 0, 46)
+kRow.BackgroundColor3 = Color3.fromRGB(30,30,38)
+kRow.BorderSizePixel = 0
+kRow.Parent = skinsTab
+local krc = Instance.new("UICorner"); krc.CornerRadius = UDim.new(0,6); krc.Parent = kRow
+local klbl = Instance.new("TextLabel")
+klbl.Size = UDim2.new(1,-20,0,16); klbl.Position = UDim2.new(0,12,0,4)
+klbl.BackgroundTransparency = 1; klbl.Text = "Knife Model"
+klbl.TextColor3 = Color3.fromRGB(225,225,235); klbl.Font = Enum.Font.Gotham
+klbl.TextSize = 11; klbl.TextXAlignment = Enum.TextXAlignment.Left; klbl.Parent = kRow
+local kHolder = Instance.new("ScrollingFrame")
+kHolder.Size = UDim2.new(1,-24,0,22); kHolder.Position = UDim2.new(0,12,0,22)
+kHolder.BackgroundTransparency = 1; kHolder.BorderSizePixel = 0
+kHolder.ScrollBarThickness = 0; kHolder.CanvasSize = UDim2.new(0, #kOpts*88, 0, 0)
+kHolder.ScrollingDirection = Enum.ScrollingDirection.X; kHolder.Parent = kRow
+local kHL = Instance.new("UIListLayout"); kHL.FillDirection = Enum.FillDirection.Horizontal; kHL.Padding = UDim.new(0,4); kHL.Parent = kHolder
+local kBtns = {}
+for _, kn in ipairs(kOpts) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 84, 1, 0); b.BackgroundColor3 = Color3.fromRGB(45,45,56)
+    b.BorderSizePixel = 0; b.Text = kn; b.TextColor3 = Color3.fromRGB(170,170,190)
+    b.Font = Enum.Font.GothamBold; b.TextSize = 9; b.TextWrapped = true
+    b.AutoButtonColor = false; b.Parent = kHolder
+    local kbc = Instance.new("UICorner"); kbc.CornerRadius = UDim.new(0,5); kbc.Parent = b
+    table.insert(kBtns, {Btn = b, Val = kn})
+    b.MouseButton1Click:Connect(function()
+        Cfg.KnifeModel = kn
+        for _, x in ipairs(kBtns) do
+            if x.Val == kn then
+                x.Btn.BackgroundColor3 = Cfg.GuiColor; x.Btn.TextColor3 = Color3.new(1,1,1)
+            else
+                x.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56); x.Btn.TextColor3 = Color3.fromRGB(170,170,190)
+            end
+        end
+    end)
+end
+if kBtns[1] then kBtns[1].Btn.BackgroundColor3 = Cfg.GuiColor; kBtns[1].Btn.TextColor3 = Color3.new(1,1,1) end
 
--- Reset tab
-local resetTab = makeTab("Reset")
-section(resetTab, "Сброс")
+for _, kn in ipairs(kOpts) do
+    local ks = SkinData.SkinSelections[kn]
+    if ks then
+        skinRow(skinsTab, kn .. " Skin", ks,
+            function() return Cfg.Skins[kn] or findDefaultSkin(kn) end,
+            function(v) Cfg.Skins[kn] = v end)
+    end
+end
+
+-- Gloves Changer (внутри SKINS)
+section(skinsTab, "Gloves Changer")
+toggle(skinsTab, "Enable Gloves Changer", "GloveChangerEnabled")
+
+local gOpts = {"Sports Gloves","Driver Gloves","Operator Gloves","Hand Wraps","CT Glove","T Glove"}
+local gRow = Instance.new("Frame")
+gRow.Size = UDim2.new(1, 0, 0, 46)
+gRow.BackgroundColor3 = Color3.fromRGB(30,30,38)
+gRow.BorderSizePixel = 0
+gRow.Parent = skinsTab
+local grc = Instance.new("UICorner"); grc.CornerRadius = UDim.new(0,6); grc.Parent = gRow
+local glbl = Instance.new("TextLabel")
+glbl.Size = UDim2.new(1,-20,0,16); glbl.Position = UDim2.new(0,12,0,4)
+glbl.BackgroundTransparency = 1; glbl.Text = "Glove Model"
+glbl.TextColor3 = Color3.fromRGB(225,225,235); glbl.Font = Enum.Font.Gotham
+glbl.TextSize = 11; glbl.TextXAlignment = Enum.TextXAlignment.Left; glbl.Parent = gRow
+local gHolder = Instance.new("ScrollingFrame")
+gHolder.Size = UDim2.new(1,-24,0,22); gHolder.Position = UDim2.new(0,12,0,22)
+gHolder.BackgroundTransparency = 1; gHolder.BorderSizePixel = 0
+gHolder.ScrollBarThickness = 0; gHolder.CanvasSize = UDim2.new(0, #gOpts*100, 0, 0)
+gHolder.ScrollingDirection = Enum.ScrollingDirection.X; gHolder.Parent = gRow
+local gHL = Instance.new("UIListLayout"); gHL.FillDirection = Enum.FillDirection.Horizontal; gHL.Padding = UDim.new(0,4); gHL.Parent = gHolder
+local gBtns = {}
+for _, gn in ipairs(gOpts) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 96, 1, 0); b.BackgroundColor3 = Color3.fromRGB(45,45,56)
+    b.BorderSizePixel = 0; b.Text = gn; b.TextColor3 = Color3.fromRGB(170,170,190)
+    b.Font = Enum.Font.GothamBold; b.TextSize = 9; b.TextWrapped = true
+    b.AutoButtonColor = false; b.Parent = gHolder
+    local gbc = Instance.new("UICorner"); gbc.CornerRadius = UDim.new(0,5); gbc.Parent = b
+    table.insert(gBtns, {Btn = b, Val = gn})
+    b.MouseButton1Click:Connect(function()
+        Cfg.GloveModel = gn
+        for _, x in ipairs(gBtns) do
+            if x.Val == gn then
+                x.Btn.BackgroundColor3 = Cfg.GuiColor; x.Btn.TextColor3 = Color3.new(1,1,1)
+            else
+                x.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56); x.Btn.TextColor3 = Color3.fromRGB(170,170,190)
+            end
+        end
+    end)
+end
+if gBtns[1] then gBtns[1].Btn.BackgroundColor3 = Cfg.GuiColor; gBtns[1].Btn.TextColor3 = Color3.new(1,1,1) end
+
+for _, gn in ipairs(gOpts) do
+    local gs = SkinData.GloveSelections[gn]
+    if gs then
+        skinRow(skinsTab, gn, gs,
+            function() return Cfg.Gloves[gn] or "Default" end,
+            function(v) Cfg.Gloves[gn] = v end)
+    end
+end
+
+-- Reset (внутри SKINS)
+section(skinsTab, "Reset")
 local resetBtn = Instance.new("TextButton")
 resetBtn.Size = UDim2.new(1, 0, 0, 40)
 resetBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
@@ -1384,7 +1482,7 @@ resetBtn.Text = "СБРОСИТЬ ВСЕ СКИНЫ"
 resetBtn.TextColor3 = Color3.new(1,1,1)
 resetBtn.Font = Enum.Font.GothamBold
 resetBtn.TextSize = 13
-resetBtn.Parent = resetTab
+resetBtn.Parent = skinsTab
 local rbc = Instance.new("UICorner"); rbc.CornerRadius = UDim.new(0,6); rbc.Parent = resetBtn
 resetBtn.MouseButton1Click:Connect(function()
     for w, _ in pairs(SkinData.SkinSelections) do
