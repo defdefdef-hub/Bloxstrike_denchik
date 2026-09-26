@@ -1,49 +1,97 @@
---[[
-    DeNsI v6 — Blox Strike (Unified)
-    Executor: Arceus X Neo
-    Всё в одном: ESP / AIM / SKINS / VISUAL / MISC
-]]
+--[[ DeNsI v7 — Full Diagnostic Build ]]
 
--- === Проверка окружения ===
-local REQUIRED = {"hookfunction", "getgc", "setreadonly"}
-for _, f in ipairs(REQUIRED) do
-    if not _G[f] and not rawget(_G, f) then
-        warn("[DeNsI] Нет функции: " .. f)
-        return
-    end
-end
-if not Drawing or not Drawing.new then
-    warn("[DeNsI] Нет Drawing API")
-    return
+-- === Диагностическая панель ПЕРВЫМ делом ===
+local __dgui = Instance.new("ScreenGui")
+__dgui.Name = "DeNsI_Diag"
+__dgui.ResetOnSpawn = false
+__dgui.DisplayOrder = 999
+pcall(function() __dgui.Parent = game:GetService("CoreGui") end)
+if not __dgui.Parent then
+    __dgui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
-print("[DeNsI] Окружение OK")
+local __dframe = Instance.new("Frame")
+__dframe.Size = UDim2.new(0, 360, 0, 240)
+__dframe.Position = UDim2.new(0.5, -180, 0, 60)
+__dframe.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+__dframe.BorderSizePixel = 2
+__dframe.BorderColor3 = Color3.fromRGB(100, 130, 255)
+__dframe.Parent = __dgui
 
-if _G.DeNsI_Cleanup then pcall(_G.DeNsI_Cleanup) end
-_G.DeNsI_Cleanup = nil
+local __dtitle = Instance.new("TextLabel")
+__dtitle.Size = UDim2.new(1, 0, 0, 24)
+__dtitle.BackgroundColor3 = Color3.fromRGB(100, 130, 255)
+__dtitle.BorderSizePixel = 0
+__dtitle.Text = "  DeNsI v7 — загрузка"
+__dtitle.TextColor3 = Color3.new(1,1,1)
+__dtitle.Font = Enum.Font.GothamBold
+__dtitle.TextSize = 14
+__dtitle.TextXAlignment = Enum.TextXAlignment.Left
+__dtitle.Parent = __dframe
 
--- === Сервисы ===
-local Players      = game:GetService("Players")
-local RunService   = game:GetService("RunService")
-local UIS          = game:GetService("UserInputService")
-local Tween        = game:GetService("TweenService")
-local RS           = game:GetService("ReplicatedStorage")
-local Lighting     = game:GetService("Lighting")
-local LP           = Players.LocalPlayer
-local Cam          = workspace.CurrentCamera
+local __dscroll = Instance.new("ScrollingFrame")
+__dscroll.Size = UDim2.new(1, -10, 1, -34)
+__dscroll.Position = UDim2.new(0, 5, 0, 29)
+__dscroll.BackgroundTransparency = 1
+__dscroll.BorderSizePixel = 0
+__dscroll.ScrollBarThickness = 4
+__dscroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+__dscroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+__dscroll.Parent = __dframe
 
--- Чистим прошлые GUI
+local __dlayout = Instance.new("UIListLayout")
+__dlayout.Padding = UDim.new(0, 2)
+__dlayout.Parent = __dscroll
+
+local __hasErr = false
+local function __log(msg, isErr)
+    if isErr then __hasErr = true end
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -10, 0, 16)
+    l.BackgroundTransparency = 1
+    l.Text = tostring(msg)
+    l.TextColor3 = isErr and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
+    l.Font = Enum.Font.Code
+    l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.TextWrapped = true
+    l.Parent = __dscroll
+    print(msg)
+end
+
+__log("[Boot] старт")
+
+-- === Основной код в pcall ===
+local __ok, __err = pcall(function()
+
+-- Проверка окружения
+local __env_ok = true
+if not Drawing or not Drawing.new then __log("Нет Drawing", true); __env_ok = false end
+if not hookfunction then __log("Нет hookfunction", true); __env_ok = false end
+if not getgc then __log("Нет getgc", true); __env_ok = false end
+if not __env_ok then error("Окружение не подходит") end
+__log("[1] Окружение OK")
+
+-- Сервисы
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS        = game:GetService("UserInputService")
+local Tween      = game:GetService("TweenService")
+local RS         = game:GetService("ReplicatedStorage")
+local Lighting   = game:GetService("Lighting")
+local LP         = Players.LocalPlayer
+local Cam        = workspace.CurrentCamera
+
+__log("[2] Сервисы OK")
+
 for _, g in ipairs(LP:WaitForChild("PlayerGui"):GetChildren()) do
     if g.Name:sub(1,4) == "DCS_" or g.Name:sub(1,6) == "DeNsI_" or g.Name:sub(1,7) == "SkinGUI" then
         pcall(function() g:Destroy() end)
     end
 end
 
--- ============================================================
--- КОНФИГ
--- ============================================================
+-- Конфиг
 local Cfg = {
-    -- ESP
     ESPEnabled = false, ESPTeamCheck = true,
     ESPBoxColor = Color3.fromRGB(0,200,255),
     ESPName = false, ESPNameColor = Color3.new(1,1,1),
@@ -51,31 +99,25 @@ local Cfg = {
     ESPDistance = false, ESPDistanceColor = Color3.new(1,1,1),
     ESPTracer = false, ESPTracerColor = Color3.new(1,1,1),
 
-    -- Silent Aim
     SilentEnabled = false, SilentTeamCheck = true, SilentVisibleOnly = true,
     SilentTargetPart = "Head", SilentPriority = "Crosshair", SilentMaxDistance = 1200,
     SilentHitChance = 100, SilentFOV = 150, SilentPrediction = true, SilentBulletSpeed = 1000,
 
-    -- Aimbot
     AimbotEnabled = false, AimbotTeamCheck = true, AimbotVisibleOnly = true,
     AimbotHitPart = "Head", AimbotFOV = 120, AimbotSmooth = 4,
     AimbotMaxDistance = 800, AimbotPrediction = true, AimbotBulletSpeed = 1000,
 
-    -- Crosshair
     CrosshairEnabled = false, CrosshairColor = Color3.fromRGB(0,255,0),
     CrosshairSize = 10, CrosshairGap = 5, CrosshairThick = 2,
     CrosshairDot = true, CrosshairRainbow = false,
 
-    -- Camera
     CustomFovToggle = false, FovAmount = 90,
     ThirdPerson = false, ThirdPersonDist = 10,
 
-    -- World
     EnableSkybox = false, SkyboxPreset = "Night",
     AutoBhop = false, BhopSpeed = 18,
     Antiflashbang = false,
 
-    -- Skins
     SkinChangerEnabled = false,
     KnifeChangerEnabled = false,
     GloveChangerEnabled = false,
@@ -84,7 +126,6 @@ local Cfg = {
     GloveModel = "Sports Gloves",
     Gloves = {},
 
-    -- GUI
     GuiColor = Color3.fromRGB(100,130,255),
 }
 
@@ -94,9 +135,7 @@ local PALETTE = {
     Color3.fromRGB(242,244,250), Color3.fromRGB(80,80,90),
 }
 
--- ============================================================
--- УТИЛИТЫ
--- ============================================================
+-- Утилиты
 local function teamOf(p)
     local n = p:GetAttribute("Team")
     if n == "Counter-Terrorists" or n == "Terrorists" then return n end
@@ -116,18 +155,16 @@ local function matchChar(p)
     return c, h, m
 end
 
--- ============================================================
--- BULLET MODULE
--- ============================================================
+__log("[3] Утилиты OK")
+
+-- Bullet
 local Bullet = nil
 pcall(function()
     Bullet = require(RS.Components.Weapon.Classes.Bullet)
 end)
-print("[DeNsI] Bullet: " .. (Bullet and "OK" or "FAIL"))
+__log("[4] Bullet: " .. (Bullet and "OK" or "FAIL"))
 
--- ============================================================
--- ПОИСК ЦЕЛИ
--- ============================================================
+-- Поиск цели
 local AimParts = {"Head", "UpperTorso", "LowerTorso"}
 
 local function findTarget(maxDist, fov, teamCheck, visibleOnly, partName, priority)
@@ -180,9 +217,7 @@ local function findTarget(maxDist, fov, teamCheck, visibleOnly, partName, priori
     return best
 end
 
--- ============================================================
--- SILENT AIM
--- ============================================================
+-- Silent Aim
 local Aim = {Ready = false, Target = nil}
 local AimRandom = Random.new()
 
@@ -254,11 +289,9 @@ if Bullet and Bullet._performRaycast then
         Aim.Ready = Bullet._performRaycast == Aim.Wrapper
     end)
 end
-print("[DeNsI] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
+__log("[5] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
 
--- ============================================================
--- AIMBOT
--- ============================================================
+-- Aimbot
 local AimbotHeld = false
 local AimbotTarget = nil
 
@@ -301,9 +334,9 @@ RunService.RenderStepped:Connect(function(dt)
     Cam.CFrame = Cam.CFrame:Lerp(desired, alpha)
 end)
 
--- ============================================================
--- SKYBOX
--- ============================================================
+__log("[6] Aimbot OK")
+
+-- Skybox
 local SkyboxTable = {
     Night = {Bk="rbxassetid://1514717643", Dn="rbxassetid://1514716936", Ft="rbxassetid://1514715910", Lf="rbxassetid://1514714945", Rt="rbxassetid://1514714011", Up="rbxassetid://1514713374"},
     ["Ocean Sunset"] = {Bk="rbxassetid://17525686840", Dn="rbxassetid://17525678473", Ft="rbxassetid://17525684686", Lf="rbxassetid://17525680663", Rt="rbxassetid://17525682665", Up="rbxassetid://17525674545"},
@@ -337,9 +370,9 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ============================================================
--- AUTO BHOP
--- ============================================================
+__log("[7] Skybox OK")
+
+-- Auto Bhop
 RunService.Heartbeat:Connect(function()
     if not Cfg.AutoBhop then return end
     local char = LP.Character
@@ -358,9 +391,9 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ============================================================
--- ANTI-FLASH
--- ============================================================
+__log("[8] Bhop OK")
+
+-- Anti-Flash
 pcall(function()
     for _, obj in next, getgc(true) do
         if type(obj) == "function" then
@@ -376,9 +409,9 @@ pcall(function()
     end
 end)
 
--- ============================================================
--- CAMERA FOV / THIRD PERSON
--- ============================================================
+__log("[9] Anti-Flash OK")
+
+-- Camera
 RunService.RenderStepped:Connect(function()
     if not Cam then return end
     if Cfg.CustomFovToggle then Cam.FieldOfView = Cfg.FovAmount end
@@ -390,9 +423,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============================================================
--- ESP (ПОФИКШЕНО: не остаются квадраты после смерти)
--- ============================================================
+__log("[10] Camera OK")
+
+-- ESP (пофикшено)
 local ESPData = {}
 
 local function getBox(inst)
@@ -445,9 +478,7 @@ end
 
 RunService.RenderStepped:Connect(function()
     if not Cfg.ESPEnabled then
-        for inst, _ in pairs(ESPData) do
-            hideESP(inst)
-        end
+        for inst, _ in pairs(ESPData) do hideESP(inst) end
         return
     end
 
@@ -455,7 +486,6 @@ RunService.RenderStepped:Connect(function()
     if not cf then return end
     local myTeam = teamOf(LP)
 
-    -- Скрываем ESP для всех, кто больше не в Characters
     for inst, _ in pairs(ESPData) do
         if not inst.Parent or not inst:IsDescendantOf(cf) then
             hideESP(inst)
@@ -467,7 +497,6 @@ RunService.RenderStepped:Connect(function()
             local p = Players:GetPlayerFromCharacter(inst)
             local isDead = false
 
-            -- Проверка: не игрок ИЛИ мёртв ИЛИ не проходит matchChar
             if not p then
                 isDead = true
             else
@@ -475,14 +504,9 @@ RunService.RenderStepped:Connect(function()
                 if not h then isDead = true end
             end
 
-            -- Дополнительная проверка через атрибуты
-            if inst:GetAttribute("Dead") == true then
-                isDead = true
-            end
+            if inst:GetAttribute("Dead") == true then isDead = true end
             local hpAttr = inst:GetAttribute("Health")
-            if hpAttr and hpAttr <= 0 then
-                isDead = true
-            end
+            if hpAttr and hpAttr <= 0 then isDead = true end
 
             if isDead then
                 hideESP(inst)
@@ -519,7 +543,7 @@ RunService.RenderStepped:Connect(function()
 
                         d.tracer.From = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y)
                         d.tracer.To = Vector2.new(box.cx, box.cy)
-                        d.tracer.Color = Cfg.ESPtracerColor
+                        d.tracer.Color = Cfg.ESPTracerColor
                         d.tracer.Visible = Cfg.ESPTracer
                     else
                         hideESP(inst)
@@ -530,9 +554,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============================================================
--- CUSTOM CROSSHAIR
--- ============================================================
+__log("[11] ESP OK")
+
+-- Crosshair
 local chGui = Instance.new("ScreenGui")
 chGui.Name = "DeNsI_Crosshair"
 chGui.ResetOnSpawn = false
@@ -582,10 +606,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============================================================
--- SKIN CHANGER (сбор данных)
--- ============================================================
-local SkinData = {Root = nil, SkinSelections = {}, GloveSelections = {}, GloveFolders = {}, AllWeapons = {}}
+__log("[12] Crosshair OK")
+
+-- Skin Changer data
+local SkinData = {Root = nil, SkinSelections = {}, GloveSelections = {}, AllWeapons = {}}
 
 pcall(function()
     SkinData.Root = RS:FindFirstChild("Assets") and RS.Assets:FindFirstChild("Skins")
@@ -631,9 +655,9 @@ for g, _ in pairs(SkinData.GloveSelections) do
     Cfg.Gloves[g] = "Default"
 end
 
-print("[DeNsI] Найдено оружий: " .. #SkinData.AllWeapons)
+__log("[13] Skin data: " .. #SkinData.AllWeapons .. " оружий")
 
--- === КАТЕГОРИИ ===
+-- Категории
 local CATEGORIES = {
     {Name = "Пистолеты", Items = {"Desert Eagle","Dual Berettas","Five-SeveN","Glock-18","P250","R8 Revolver","Tec-9","USP-S"}},
     {Name = "ПП", Items = {"MAC-10","MP9","MP7","MP5-SD","P90","UMP-45"}},
@@ -646,7 +670,6 @@ local CATEGORIES = {
     {Name = "Гранаты", Items = {"C4","Decoy Grenade","Flashbang","HE Grenade","Incendiary Grenade","Molotov","Smoke Grenade","Zeus x27"}},
 }
 
--- === ХУКИ СКИНОВ ===
 local KNIFE_LIST = {"CT Knife","T Knife","Knife","Karambit","Butterfly Knife",
                     "Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife",
                     "Stiletto Knife","LightSaber"}
@@ -732,7 +755,9 @@ pcall(function()
     end
 end)
 
--- === FALLBACK: применение через SurfaceAppearance ===
+__log("[14] Хуки скинов OK")
+
+-- Применение скинов
 local function getWeaponModel()
     if not Cam then return nil end
     for _, ch in pairs(Cam:GetChildren()) do
@@ -748,7 +773,6 @@ local function applySkinToModel()
     if not SkinData.Root then return end
     local wm = getWeaponModel()
     if not wm then return end
-
     local own = wm.Name
     local effective = own
     local shouldApply = false
@@ -763,7 +787,6 @@ local function applySkinToModel()
             shouldApply = true
         end
     end
-
     if not shouldApply then return end
 
     local sel = Cfg.Skins[effective]
@@ -843,9 +866,7 @@ task.spawn(function()
     end
 end)
 
--- ============================================================
 -- GUI
--- ============================================================
 local gui = Instance.new("ScreenGui")
 gui.Name = "DeNsI_GUI"
 gui.ResetOnSpawn = false
@@ -879,7 +900,7 @@ local titleLbl = Instance.new("TextLabel")
 titleLbl.Size = UDim2.new(1, -100, 1, 0)
 titleLbl.Position = UDim2.new(0, 14, 0, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text = "DeNsI v6"
+titleLbl.Text = "DeNsI v7"
 titleLbl.TextColor3 = Color3.fromRGB(240,240,250)
 titleLbl.Font = Enum.Font.GothamBold
 titleLbl.TextSize = 14
@@ -1292,7 +1313,7 @@ local function skinRow(parent, title, options, getValue, setValue)
     refresh()
 end
 
--- === ВКЛАДКА ESP ===
+-- ESP tab
 local espTab = makeTab("ESP")
 section(espTab, "Основное")
 toggle(espTab, "ESP Enabled", "ESPEnabled")
@@ -1307,7 +1328,7 @@ colorRow(espTab, "Box Color", function(c) Cfg.ESPBoxColor = c end)
 colorRow(espTab, "Name Color", function(c) Cfg.ESPNameColor = c end)
 colorRow(espTab, "Tracer Color", function(c) Cfg.ESPTracerColor = c end)
 
--- === ВКЛАДКА AIM ===
+-- AIM tab
 local aimTab = makeTab("AIM")
 section(aimTab, "Silent Aim")
 toggle(aimTab, "Silent Aim", "SilentEnabled")
@@ -1324,7 +1345,7 @@ toggle(aimTab, "Prediction", "AimbotPrediction")
 slider(aimTab, "Smooth", "AimbotSmooth", 0.5, 20, 0.5)
 slider(aimTab, "FOV", "AimbotFOV", 10, 500, 10)
 
--- === ВКЛАДКА VISUAL ===
+-- Visual tab
 local visTab = makeTab("VISUAL")
 section(visTab, "Crosshair")
 toggle(visTab, "Crosshair", "CrosshairEnabled")
@@ -1340,7 +1361,7 @@ slider(visTab, "FOV", "FovAmount", 70, 120, 1)
 toggle(visTab, "Third Person", "ThirdPerson")
 slider(visTab, "Distance", "ThirdPersonDist", 5, 50, 1)
 
--- === ВКЛАДКА MISC ===
+-- Misc tab
 local miscTab = makeTab("MISC")
 section(miscTab, "Movement")
 toggle(miscTab, "Auto Bhop", "AutoBhop")
@@ -1350,7 +1371,7 @@ toggle(miscTab, "Anti-Flashbang", "Antiflashbang")
 section(miscTab, "Skybox")
 toggle(miscTab, "Enable Skybox", "EnableSkybox")
 
--- === ВКЛАДКИ SKIN CHANGER ПО КАТЕГОРИЯМ ===
+-- Skin tabs
 for _, cat in ipairs(CATEGORIES) do
     local availableItems = {}
     for _, item in ipairs(cat.Items) do
@@ -1375,115 +1396,17 @@ for _, cat in ipairs(CATEGORIES) do
     end
 end
 
--- Вкладка Knife Model
+-- Knife Model
 local knifeTab = makeTab("Knife Model")
 section(knifeTab, "Knife Changer")
 toggle(knifeTab, "Enable Knife Changer", "KnifeChangerEnabled")
 
-local kOpts = {"Karambit","Butterfly Knife","Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife","Stiletto Knife","CT Knife","T Knife","LightSaber"}
-local kRow = Instance.new("Frame")
-kRow.Size = UDim2.new(1, 0, 0, 46)
-kRow.BackgroundColor3 = Color3.fromRGB(30,30,38)
-kRow.BorderSizePixel = 0
-kRow.Parent = knifeTab
-local krc = Instance.new("UICorner"); krc.CornerRadius = UDim.new(0,6); krc.Parent = kRow
-local klbl = Instance.new("TextLabel")
-klbl.Size = UDim2.new(1,-20,0,16); klbl.Position = UDim2.new(0,12,0,4)
-klbl.BackgroundTransparency = 1; klbl.Text = "Knife Model"
-klbl.TextColor3 = Color3.fromRGB(225,225,235); klbl.Font = Enum.Font.Gotham
-klbl.TextSize = 11; klbl.TextXAlignment = Enum.TextXAlignment.Left; klbl.Parent = kRow
-local kHolder = Instance.new("ScrollingFrame")
-kHolder.Size = UDim2.new(1,-24,0,22); kHolder.Position = UDim2.new(0,12,0,22)
-kHolder.BackgroundTransparency = 1; kHolder.BorderSizePixel = 0
-kHolder.ScrollBarThickness = 0; kHolder.CanvasSize = UDim2.new(0, #kOpts*88, 0, 0)
-kHolder.ScrollingDirection = Enum.ScrollingDirection.X; kHolder.Parent = kRow
-local kHL = Instance.new("UIListLayout"); kHL.FillDirection = Enum.FillDirection.Horizontal; kHL.Padding = UDim.new(0,4); kHL.Parent = kHolder
-local kBtns = {}
-for _, kn in ipairs(kOpts) do
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0, 84, 1, 0); b.BackgroundColor3 = Color3.fromRGB(45,45,56)
-    b.BorderSizePixel = 0; b.Text = kn; b.TextColor3 = Color3.fromRGB(170,170,190)
-    b.Font = Enum.Font.GothamBold; b.TextSize = 9; b.TextWrapped = true
-    b.AutoButtonColor = false; b.Parent = kHolder
-    local kbc = Instance.new("UICorner"); kbc.CornerRadius = UDim.new(0,5); kbc.Parent = b
-    table.insert(kBtns, {Btn = b, Val = kn})
-    b.MouseButton1Click:Connect(function()
-        Cfg.KnifeModel = kn
-        for _, x in ipairs(kBtns) do
-            if x.Val == kn then
-                x.Btn.BackgroundColor3 = Cfg.GuiColor; x.Btn.TextColor3 = Color3.new(1,1,1)
-            else
-                x.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56); x.Btn.TextColor3 = Color3.fromRGB(170,170,190)
-            end
-        end
-    end)
-end
-if kBtns[1] then kBtns[1].Btn.BackgroundColor3 = Cfg.GuiColor; kBtns[1].Btn.TextColor3 = Color3.new(1,1,1) end
-
-for _, kn in ipairs(kOpts) do
-    local ks = SkinData.SkinSelections[kn]
-    if ks then
-        skinRow(knifeTab, kn .. " Skin", ks,
-            function() return Cfg.Skins[kn] or findDefaultSkin(kn) end,
-            function(v) Cfg.Skins[kn] = v end)
-    end
-end
-
--- Вкладка Gloves Model
+-- Gloves Model
 local glovesTab = makeTab("Gloves Model")
 section(glovesTab, "Gloves Changer")
 toggle(glovesTab, "Enable Gloves Changer", "GloveChangerEnabled")
 
-local gOpts = {"Sports Gloves","Driver Gloves","Operator Gloves","Hand Wraps","CT Glove","T Glove"}
-local gRow = Instance.new("Frame")
-gRow.Size = UDim2.new(1, 0, 0, 46)
-gRow.BackgroundColor3 = Color3.fromRGB(30,30,38)
-gRow.BorderSizePixel = 0
-gRow.Parent = glovesTab
-local grc = Instance.new("UICorner"); grc.CornerRadius = UDim.new(0,6); grc.Parent = gRow
-local glbl = Instance.new("TextLabel")
-glbl.Size = UDim2.new(1,-20,0,16); glbl.Position = UDim2.new(0,12,0,4)
-glbl.BackgroundTransparency = 1; glbl.Text = "Glove Model"
-glbl.TextColor3 = Color3.fromRGB(225,225,235); glbl.Font = Enum.Font.Gotham
-glbl.TextSize = 11; glbl.TextXAlignment = Enum.TextXAlignment.Left; glbl.Parent = gRow
-local gHolder = Instance.new("ScrollingFrame")
-gHolder.Size = UDim2.new(1,-24,0,22); gHolder.Position = UDim2.new(0,12,0,22)
-gHolder.BackgroundTransparency = 1; gHolder.BorderSizePixel = 0
-gHolder.ScrollBarThickness = 0; gHolder.CanvasSize = UDim2.new(0, #gOpts*100, 0, 0)
-gHolder.ScrollingDirection = Enum.ScrollingDirection.X; gHolder.Parent = gRow
-local gHL = Instance.new("UIListLayout"); gHL.FillDirection = Enum.FillDirection.Horizontal; gHL.Padding = UDim.new(0,4); gHL.Parent = gHolder
-local gBtns = {}
-for _, gn in ipairs(gOpts) do
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0, 96, 1, 0); b.BackgroundColor3 = Color3.fromRGB(45,45,56)
-    b.BorderSizePixel = 0; b.Text = gn; b.TextColor3 = Color3.fromRGB(170,170,190)
-    b.Font = Enum.Font.GothamBold; b.TextSize = 9; b.TextWrapped = true
-    b.AutoButtonColor = false; b.Parent = gHolder
-    local gbc = Instance.new("UICorner"); gbc.CornerRadius = UDim.new(0,5); gbc.Parent = b
-    table.insert(gBtns, {Btn = b, Val = gn})
-    b.MouseButton1Click:Connect(function()
-        Cfg.GloveModel = gn
-        for _, x in ipairs(gBtns) do
-            if x.Val == gn then
-                x.Btn.BackgroundColor3 = Cfg.GuiColor; x.Btn.TextColor3 = Color3.new(1,1,1)
-            else
-                x.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56); x.Btn.TextColor3 = Color3.fromRGB(170,170,190)
-            end
-        end
-    end)
-end
-if gBtns[1] then gBtns[1].Btn.BackgroundColor3 = Cfg.GuiColor; gBtns[1].Btn.TextColor3 = Color3.new(1,1,1) end
-
-for _, gn in ipairs(gOpts) do
-    local gs = SkinData.GloveSelections[gn]
-    if gs then
-        skinRow(glovesTab, gn, gs,
-            function() return Cfg.Gloves[gn] or "Default" end,
-            function(v) Cfg.Gloves[gn] = v end)
-    end
-end
-
--- Вкладка Reset
+-- Reset tab
 local resetTab = makeTab("Reset")
 section(resetTab, "Сброс")
 local resetBtn = Instance.new("TextButton")
@@ -1503,12 +1426,11 @@ resetBtn.MouseButton1Click:Connect(function()
     for g, _ in pairs(SkinData.GloveSelections) do
         Cfg.Gloves[g] = "Default"
     end
-    print("[DeNsI] Скины сброшены")
 end)
 
--- ============================================================
--- КНОПКА ВОЗВРАТА
--- ============================================================
+__log("[15] GUI OK")
+
+-- Кнопка возврата
 local reopenBtn = Instance.new("TextButton")
 reopenBtn.Name = "DeNsI_Reopen"
 reopenBtn.Size = UDim2.new(0, 44, 0, 44)
@@ -1567,7 +1489,6 @@ end)
 
 switchTab("ESP")
 
--- === CLEANUP ===
 _G.DeNsI_Cleanup = function()
     for inst, d in pairs(ESPData) do
         pcall(function() d.outline:Remove() end)
@@ -1579,6 +1500,19 @@ _G.DeNsI_Cleanup = function()
     pcall(function() gui:Destroy() end)
 end
 
-print("[DeNsI] v6 загружен успешно")
-print("[DeNsI] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
-print("[DeNsI] Bullet: " .. (Bullet and "OK" or "FAIL"))
+__log("[16] Всё OK")
+
+end)  -- конец pcall
+
+if not __ok then
+    __log("[CRASH] " .. tostring(__err), true)
+else
+    __log("[OK] Скрипт загружен")
+end
+
+task.spawn(function()
+    task.wait(20)
+    if not __hasErr then
+        pcall(function() __dgui:Destroy() end)
+    end
+end)
