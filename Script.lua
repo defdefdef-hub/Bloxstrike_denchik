@@ -1,152 +1,124 @@
--- Обёртка для показа ошибок на экране (для телефона)
-local __gui = Instance.new("ScreenGui")
-__gui.Name = "DeNsI_Errors"
-__gui.ResetOnSpawn = false
-__gui.DisplayOrder = 999
-pcall(function() __gui.Parent = game:GetService("CoreGui") end)
-if not __gui.Parent then
-    __gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+--[[ DeNsI v4 — Blox Strike — Arceus X Neo — single file ]]
+
+-- === Диагностическая панель ===
+local __dgui = Instance.new("ScreenGui")
+__dgui.Name = "DeNsI_Diag"
+__dgui.ResetOnSpawn = false
+__dgui.DisplayOrder = 999
+pcall(function() __dgui.Parent = game:GetService("CoreGui") end)
+if not __dgui.Parent then
+    __dgui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
-local __frame = Instance.new("Frame")
-__frame.Size = UDim2.new(0, 400, 0, 260)
-__frame.Position = UDim2.new(0.5, -200, 0, 60)
-__frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-__frame.BorderSizePixel = 2
-__frame.BorderColor3 = Color3.fromRGB(255, 60, 60)
-__frame.Parent = __gui
+local __dframe = Instance.new("Frame")
+__dframe.Size = UDim2.new(0, 360, 0, 220)
+__dframe.Position = UDim2.new(0.5, -180, 0, 60)
+__dframe.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+__dframe.BorderSizePixel = 2
+__dframe.BorderColor3 = Color3.fromRGB(100, 130, 255)
+__dframe.Parent = __dgui
 
-local __title = Instance.new("TextLabel")
-__title.Size = UDim2.new(1, 0, 0, 24)
-__title.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-__title.BorderSizePixel = 0
-__title.Text = "  DeNsI: Ошибка"
-__title.TextColor3 = Color3.new(1,1,1)
-__title.Font = Enum.Font.GothamBold
-__title.TextSize = 14
-__title.TextXAlignment = Enum.TextXAlignment.Left
-__title.Parent = __frame
+local __dtitle = Instance.new("TextLabel")
+__dtitle.Size = UDim2.new(1, 0, 0, 24)
+__dtitle.BackgroundColor3 = Color3.fromRGB(100, 130, 255)
+__dtitle.BorderSizePixel = 0
+__dtitle.Text = "  DeNsI v4 — загрузка"
+__dtitle.TextColor3 = Color3.new(1,1,1)
+__dtitle.Font = Enum.Font.GothamBold
+__dtitle.TextSize = 14
+__dtitle.TextXAlignment = Enum.TextXAlignment.Left
+__dtitle.Parent = __dframe
 
-local __scroll = Instance.new("ScrollingFrame")
-__scroll.Size = UDim2.new(1, -10, 1, -34)
-__scroll.Position = UDim2.new(0, 5, 0, 29)
-__scroll.BackgroundTransparency = 1
-__scroll.BorderSizePixel = 0
-__scroll.ScrollBarThickness = 4
-__scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-__scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-__scroll.Parent = __frame
+local __dscroll = Instance.new("ScrollingFrame")
+__dscroll.Size = UDim2.new(1, -10, 1, -34)
+__dscroll.Position = UDim2.new(0, 5, 0, 29)
+__dscroll.BackgroundTransparency = 1
+__dscroll.BorderSizePixel = 0
+__dscroll.ScrollBarThickness = 4
+__dscroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+__dscroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+__dscroll.Parent = __dframe
 
-local __layout = Instance.new("UIListLayout")
-__layout.Padding = UDim.new(0, 2)
-__layout.SortOrder = Enum.SortOrder.LayoutOrder
-__layout.Parent = __scroll
+local __dlayout = Instance.new("UIListLayout")
+__dlayout.Padding = UDim.new(0, 2)
+__dlayout.Parent = __dscroll
 
-local __hasError = false
-local function __log(msg, isErr)
-    if isErr then __hasError = true end
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -10, 0, 16)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = tostring(msg)
-    lbl.TextColor3 = isErr and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
-    lbl.Font = Enum.Font.Code
-    lbl.TextSize = 11
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.TextWrapped = true
-    lbl.Parent = __scroll
+local __dhasErr = false
+local function __dlog(msg, isErr)
+    if isErr then __dhasErr = true end
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -10, 0, 16)
+    l.BackgroundTransparency = 1
+    l.Text = tostring(msg)
+    l.TextColor3 = isErr and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
+    l.Font = Enum.Font.Code
+    l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.TextWrapped = true
+    l.Parent = __dscroll
     print(msg)
 end
 
-__log("[DeNsI] Обёртка активна", false)
-
--- === Оборачиваем ВЕСЬ остальной скрипт в pcall ===
+-- === Основной код в pcall ===
 local __ok, __err = pcall(function()
 
--- === НАЧАЛО ТВОЕГО СКРИПТА ===
---[[
-    DeNsI v3 — Blox Strike
-    Executor: Arceus X Neo
-    Single-file build
-]]--[[
-    DeNsI v3 — Blox Strike
-    Executor: Arceus X Neo
-    Single-file build
-]]
+__dlog("[1] Старт")
 
--- === Проверка окружения ===
-local REQUIRED = {"hookfunction", "getgc", "setreadonly"}
-for _, f in ipairs(REQUIRED) do
-    if not _G[f] and not rawget(_G, f) then
-        warn("[DeNsI] Инжектор не поддерживает: " .. f)
-        return
-    end
-end
-if not Drawing or not Drawing.new then
-    warn("[DeNsI] Drawing API недоступен")
-    return
-end
+-- Проверка окружения БЕЗ return
+local __env_ok = true
+if not Drawing or not Drawing.new then __dlog("Нет Drawing", true); __env_ok = false end
+if not hookfunction then __dlog("Нет hookfunction", true); __env_ok = false end
+if not getgc then __dlog("Нет getgc", true); __env_ok = false end
+if not __env_ok then error("Окружение не подходит") end
+__dlog("[2] Окружение OK")
 
-print("[DeNsI] Окружение OK")
+-- Сервисы
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS        = game:GetService("UserInputService")
+local Tween      = game:GetService("TweenService")
+local RS         = game:GetService("ReplicatedStorage")
+local Lighting   = game:GetService("Lighting")
+local LP         = Players.LocalPlayer
+local Cam        = workspace.CurrentCamera
 
--- === Очистка ===
-if _G.DeNsI_Cleanup then pcall(_G.DeNsI_Cleanup) end
-_G.DeNsI_Cleanup = nil
+__dlog("[3] Сервисы OK")
 
--- === Сервисы ===
-local Players      = game:GetService("Players")
-local RunService   = game:GetService("RunService")
-local UIS          = game:GetService("UserInputService")
-local Tween        = game:GetService("TweenService")
-local RS           = game:GetService("ReplicatedStorage")
-local SoundService = game:GetService("SoundService")
-local Lighting     = game:GetService("Lighting")
-local LP           = Players.LocalPlayer
-local Cam          = workspace.CurrentCamera
-
--- Удаляем старые GUI
+-- Чистим старые GUI
 for _, g in ipairs(LP:WaitForChild("PlayerGui"):GetChildren()) do
     if g.Name:sub(1,4) == "DCS_" or g.Name:sub(1,6) == "DeNsI_" then
         pcall(function() g:Destroy() end)
     end
 end
 
--- === Конфиг ===
+-- Конфиг
 local Cfg = {
-    ESPEnabled = false, ESPTeamCheck = true, ESPBoxType = "2D Box",
-    ESPBoxColorA = Color3.fromRGB(255,255,255), ESPBoxColorB = Color3.fromRGB(0,200,255),
-    ESPName = false, ESPNameColor = Color3.new(1,1,1),
-    ESPHealth = false, ESPHealthTopColor = Color3.fromRGB(0,255,0), ESPHealthBottomColor = Color3.fromRGB(255,0,0),
-    ESPDistance = false, ESPDistanceColor = Color3.new(1,1,1),
-    ESPTracer = false, ESPTracerColor = Color3.new(1,1,1),
-    ESPSkeleton = false, ESPSkeletonColorA = Color3.new(1,1,1), ESPSkeletonColorB = Color3.fromRGB(0,255,255),
+    ESPEnabled=false, ESPTeamCheck=true,
+    ESPBoxColor=Color3.fromRGB(0,200,255),
+    ESPName=false, ESPNameColor=Color3.new(1,1,1),
+    ESPHealth=false,
+    ESPDistance=false,
+    ESPTracer=false,
 
-    SilentEnabled = false, SilentTeamCheck = true, SilentVisibleOnly = true,
-    SilentTargetPart = "Head", SilentPriority = "Crosshair", SilentMaxDistance = 1200,
-    SilentHitChance = 100, SilentFOV = 150, SilentPrediction = true, SilentBulletSpeed = 1000,
+    SilentEnabled=false, SilentTeamCheck=true, SilentVisibleOnly=true,
+    SilentFOV=150, SilentMaxDistance=1200, SilentHitChance=100,
+    SilentPrediction=true, SilentBulletSpeed=1000,
 
-    AimbotEnabled = false, AimbotTeamCheck = true, AimbotVisibleOnly = true,
-    AimbotHitPart = "Head", AimbotFOV = 120, AimbotSmooth = 4,
-    AimbotMaxDistance = 800, AimbotPrediction = true, AimbotBulletSpeed = 1000,
+    AimbotEnabled=false, AimbotTeamCheck=true, AimbotVisibleOnly=true,
+    AimbotFOV=120, AimbotSmooth=4, AimbotMaxDistance=800,
+    AimbotPrediction=true, AimbotBulletSpeed=1000,
 
-    Antiflashbang = false, Antismoke = false,
+    Antiflashbang=false,
 
-    SkinChangerEnabled = false, SkinChangerSkins = {},
-    KnifeChangerEnabled = false, KnifeChangerModel = "Skeleton Knife",
-    GloveChangerEnabled = false, GloveChangerModel = "Sports Gloves", GloveChangerGloves = {},
+    CrosshairEnabled=false, CrosshairColor=Color3.fromRGB(0,255,0),
+    CrosshairSize=10, CrosshairGap=5, CrosshairThick=2, CrosshairDot=true,
 
-    TracerColor = Color3.fromRGB(0,170,255),
+    CustomFovToggle=false, FovAmount=90,
+    ThirdPerson=false, ThirdPersonDist=10,
 
-    CrosshairEnabled = false, CrosshairColor = Color3.fromRGB(0,255,0),
-    CrosshairSize = 10, CrosshairGap = 5, CrosshairThick = 2,
-    CrosshairDot = true, CrosshairRainbow = false,
+    EnableSkybox=false,
 
-    CustomFovToggle = false, FovAmount = 90,
-    ThirdPerson = false, ThirdPersonDist = 10,
-
-    EnableSkybox = false, SkyboxPreset = "Night",
-
-    AutoBhop = false, BhopSpeed = 18,
+    AutoBhop=false,
 
     GuiColor = Color3.fromRGB(100,130,255),
 }
@@ -157,7 +129,7 @@ local PALETTE = {
     Color3.fromRGB(242,244,250), Color3.fromRGB(80,80,90),
 }
 
--- === Утилиты ===
+-- Утилиты
 local function teamOf(p)
     local n = p:GetAttribute("Team")
     if n == "Counter-Terrorists" or n == "Terrorists" then return n end
@@ -177,15 +149,17 @@ local function matchChar(p)
     return c, h, m
 end
 
--- === Bullet module ===
+__dlog("[4] Утилиты OK")
+
+-- Bullet
 local Bullet = nil
 pcall(function()
     Bullet = require(RS.Components.Weapon.Classes.Bullet)
 end)
-print("[DeNsI] Bullet: " .. (Bullet and "OK" or "FAIL"))
+__dlog("[5] Bullet: " .. (Bullet and "OK" or "FAIL"))
 
--- === Поиск цели ===
-local AimParts = {"Head", "UpperTorso", "LowerTorso"}
+-- Поиск цели
+local AimParts = {"Head","UpperTorso","LowerTorso"}
 
 local function findTarget(maxDist, fov, teamCheck, visibleOnly, partName, priority)
     if not Cam then return nil end
@@ -223,7 +197,7 @@ local function findTarget(maxDist, fov, teamCheck, visibleOnly, partName, priori
                                                    or screenDist
                                         if score < bestScore then
                                             bestScore = score
-                                            best = {Player = p, Character = c, Part = part, Position = pos, Distance = dist}
+                                            best = {Player=p, Character=c, Part=part, Position=pos, Distance=dist}
                                         end
                                     end
                                 end
@@ -237,14 +211,13 @@ local function findTarget(maxDist, fov, teamCheck, visibleOnly, partName, priori
     return best
 end
 
--- === Silent Aim ===
-local Aim = {Ready = false, Target = nil}
+-- Silent Aim
+local Aim = {Ready=false, Target=nil}
 local AimRandom = Random.new()
 
 if Bullet and Bullet._performRaycast then
     pcall(function()
         local getIgnore = require(RS.Components.Common.GetRayIgnore)
-        Aim.GetIgnore = getIgnore
         Aim.Original = Bullet._performRaycast
 
         local function predictPos(part, origin)
@@ -267,12 +240,11 @@ if Bullet and Bullet._performRaycast then
             if AimRandom:NextInteger(1, 100) > Cfg.SilentHitChance then return shot end
 
             local target = findTarget(Cfg.SilentMaxDistance, Cfg.SilentFOV,
-                Cfg.SilentTeamCheck, Cfg.SilentVisibleOnly,
-                Cfg.SilentTargetPart, Cfg.SilentPriority)
+                Cfg.SilentTeamCheck, Cfg.SilentVisibleOnly, "Head", "Crosshair")
             if not target then return shot end
 
             local predicted = predictPos(target.Part, shot.Origin)
-            local dir = (predicted - shot.Origin)
+            local dir = predicted - shot.Origin
             if dir.Magnitude < 0.05 then return shot end
             dir = dir.Unit
 
@@ -285,23 +257,15 @@ if Bullet and Bullet._performRaycast then
             rp.FilterDescendantsInstances = ignore
             local hit = workspace:Raycast(shot.Origin, dir * range, rp)
 
-            local result = {
-                Origin = shot.Origin,
-                Direction = dir,
-                Distance = range,
-                Hits = {}
-            }
+            local result = {Origin=shot.Origin, Direction=dir, Distance=range, Hits={}}
             if hit then
                 result.Distance = (hit.Position - shot.Origin).Magnitude
                 table.insert(result.Hits, {
-                    Position = hit.Position,
-                    Instance = hit.Instance,
-                    Material = hit.Material and hit.Material.Name or "Plastic",
-                    Normal = hit.Normal or Vector3.zero,
-                    Exit = false,
+                    Position=hit.Position, Instance=hit.Instance,
+                    Material=hit.Material and hit.Material.Name or "Plastic",
+                    Normal=hit.Normal or Vector3.zero, Exit=false,
                 })
             end
-
             Aim.Target = target
             return result
         end
@@ -310,9 +274,9 @@ if Bullet and Bullet._performRaycast then
         Aim.Ready = Bullet._performRaycast == Aim.Wrapper
     end)
 end
-print("[DeNsI] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
+__dlog("[6] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
 
--- === Aimbot ===
+-- Aimbot
 local AimbotHeld = false
 local AimbotTarget = nil
 
@@ -326,22 +290,15 @@ UIS.InputEnded:Connect(function(i, gp)
 end)
 
 RunService.RenderStepped:Connect(function(dt)
-    if not Cfg.AimbotEnabled or not AimbotHeld then
-        AimbotTarget = nil
-        return
-    end
+    if not Cfg.AimbotEnabled or not AimbotHeld then AimbotTarget = nil; return end
     if not Cam then return end
-
     if not AimbotTarget or not AimbotTarget.Part or not AimbotTarget.Part.Parent then
         AimbotTarget = findTarget(Cfg.AimbotMaxDistance, Cfg.AimbotFOV,
-            Cfg.AimbotTeamCheck, Cfg.AimbotVisibleOnly,
-            Cfg.AimbotHitPart, "Crosshair")
+            Cfg.AimbotTeamCheck, Cfg.AimbotVisibleOnly, "Head", "Crosshair")
     end
     if not AimbotTarget then return end
-
     local part = AimbotTarget.Part
     if not part or not part.Parent then AimbotTarget = nil; return end
-
     local targetPos = part.Position
     if Cfg.AimbotPrediction then
         local v = part.AssemblyLinearVelocity
@@ -349,18 +306,18 @@ RunService.RenderStepped:Connect(function(dt)
         local t = math.min(d / math.max(Cfg.AimbotBulletSpeed, 1), 0.3)
         targetPos = targetPos + v * t
     end
-
     local desired = CFrame.new(Cam.CFrame.Position, targetPos)
     local alpha = math.clamp(dt * (10 / math.max(Cfg.AimbotSmooth, 0.1)), 0, 1)
     Cam.CFrame = Cam.CFrame:Lerp(desired, alpha)
 end)
 
--- === Skybox ===
+__dlog("[7] Aimbot OK")
+
+-- Skybox
 local SkyboxTable = {
     Night = {Bk="rbxassetid://1514717643", Dn="rbxassetid://1514716936", Ft="rbxassetid://1514715910", Lf="rbxassetid://1514714945", Rt="rbxassetid://1514714011", Up="rbxassetid://1514713374"},
     ["Ocean Sunset"] = {Bk="rbxassetid://17525686840", Dn="rbxassetid://17525678473", Ft="rbxassetid://17525684686", Lf="rbxassetid://17525680663", Rt="rbxassetid://17525682665", Up="rbxassetid://17525674545"},
     ["Deep Space"] = {Bk="rbxassetid://159248188", Dn="rbxassetid://159248183", Ft="rbxassetid://159248187", Lf="rbxassetid://159248173", Rt="rbxassetid://159248192", Up="rbxassetid://159248176"},
-    Retro = {Bk="rbxasset://sky/null_plainsky512_bk.jpg", Dn="rbxasset://sky/null_plainsky512_dn.jpg", Ft="rbxasset://sky/null_plainsky512_ft.jpg", Lf="rbxasset://sky/null_plainsky512_lf.jpg", Rt="rbxasset://sky/null_plainsky512_rt.jpg", Up="rbxasset://sky/null_plainsky512_up.jpg"},
 }
 
 local function UpdateSkybox(name)
@@ -382,26 +339,13 @@ end
 RunService.Heartbeat:Connect(function()
     if Cfg.EnableSkybox then
         local sky = Lighting:FindFirstChild("DeNsI_Sky")
-        local preset = SkyboxTable[Cfg.SkyboxPreset]
-        if not sky or (preset and sky.SkyboxBk ~= preset.Bk) then
-            UpdateSkybox(Cfg.SkyboxPreset)
-        end
+        if not sky then UpdateSkybox("Night") end
     end
 end)
 
--- === Auto Bhop ===
-local function getMoveDir()
-    local d = Vector3.zero
-    local lv = Cam.CFrame.LookVector
-    local rv = Cam.CFrame.RightVector
-    if UIS:IsKeyDown(Enum.KeyCode.W) then d = d + lv end
-    if UIS:IsKeyDown(Enum.KeyCode.S) then d = d - lv end
-    if UIS:IsKeyDown(Enum.KeyCode.A) then d = d - rv end
-    if UIS:IsKeyDown(Enum.KeyCode.D) then d = d + rv end
-    if d.Magnitude > 0 then return Vector3.new(d.X, 0, d.Z).Unit end
-    return Vector3.zero
-end
+__dlog("[8] Skybox OK")
 
+-- Auto Bhop
 RunService.Heartbeat:Connect(function()
     if not Cfg.AutoBhop then return end
     local char = LP.Character
@@ -409,7 +353,6 @@ RunService.Heartbeat:Connect(function()
     local root = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChild("Humanoid")
     if not root or not hum then return end
-
     if UIS:IsKeyDown(Enum.KeyCode.Space) then
         local rp = RaycastParams.new()
         rp.FilterDescendantsInstances = {char}
@@ -420,7 +363,9 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- === Anti-Flash ===
+__dlog("[9] Bhop OK")
+
+-- Anti-Flash
 pcall(function()
     for _, obj in next, getgc(true) do
         if type(obj) == "function" then
@@ -436,7 +381,9 @@ pcall(function()
     end
 end)
 
--- === Camera FOV / Third Person ===
+__dlog("[10] Anti-Flash OK")
+
+-- Camera FOV / Third Person
 RunService.RenderStepped:Connect(function()
     if not Cam then return end
     if Cfg.CustomFovToggle then Cam.FieldOfView = Cfg.FovAmount end
@@ -448,14 +395,15 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- === ESP ===
+__dlog("[11] Camera OK")
+
+-- ESP
 local ESPData = {}
 
 local function getBox(inst)
     if not inst or not inst.Parent then return nil end
-    local head = inst:FindFirstChild("Head")
     local hrp = inst:FindFirstChild("HumanoidRootPart")
-    if not head or not hrp then return nil end
+    if not hrp then return nil end
     local pos = hrp.Position
     local top, onScreen = Cam:WorldToViewportPoint(pos + Vector3.new(0, 3, 0))
     local bottom = Cam:WorldToViewportPoint(pos - Vector3.new(0, 3, 0))
@@ -463,8 +411,7 @@ local function getBox(inst)
     local h = math.abs(bottom.Y - top.Y)
     local w = h * 0.6
     return {
-        x = top.X - w/2, y = top.Y,
-        w = w, h = h,
+        x = top.X - w/2, y = top.Y, w = w, h = h,
         cx = top.X, cy = top.Y + h/2,
         dist = (Cam.CFrame.Position - pos).Magnitude,
         health = inst:GetAttribute("Health") or 100,
@@ -493,7 +440,7 @@ end
 
 RunService.RenderStepped:Connect(function()
     if not Cfg.ESPEnabled then
-        for inst, d in pairs(ESPData) do
+        for _, d in pairs(ESPData) do
             d.outline.Visible = false
             d.name.Visible = false
             d.dist.Visible = false
@@ -523,7 +470,7 @@ RunService.RenderStepped:Connect(function()
                 if box then
                     d.outline.Position = Vector2.new(box.x, box.y)
                     d.outline.Size = Vector2.new(box.w, box.h)
-                    d.outline.Color = Cfg.ESPBoxColorA
+                    d.outline.Color = Cfg.ESPBoxColor
                     d.outline.Visible = true
 
                     d.name.Text = p and p.Name or inst.Name
@@ -533,18 +480,18 @@ RunService.RenderStepped:Connect(function()
 
                     d.dist.Text = tostring(math.floor(box.dist)) .. "m"
                     d.dist.Position = Vector2.new(box.cx, box.y + box.h + 2)
-                    d.dist.Color = Cfg.ESPDistanceColor
+                    d.dist.Color = Color3.new(1,1,1)
                     d.dist.Visible = Cfg.ESPDistance
 
                     local hp = math.clamp(box.health / box.maxHealth, 0, 1)
                     d.healthBar.From = Vector2.new(box.x - 5, box.y + box.h * (1 - hp))
                     d.healthBar.To = Vector2.new(box.x - 5, box.y + box.h)
-                    d.healthBar.Color = Cfg.ESPHealthTopColor:Lerp(Cfg.ESPHealthBottomColor, 1 - hp)
+                    d.healthBar.Color = Color3.fromRGB(0,255,0):Lerp(Color3.fromRGB(255,0,0), 1 - hp)
                     d.healthBar.Visible = Cfg.ESPHealth
 
                     d.tracer.From = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y)
                     d.tracer.To = Vector2.new(box.cx, box.cy)
-                    d.tracer.Color = Cfg.ESPTracerColor
+                    d.tracer.Color = Color3.fromRGB(255,255,255)
                     d.tracer.Visible = Cfg.ESPTracer
                 else
                     d.outline.Visible = false; d.name.Visible = false
@@ -556,7 +503,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- === Custom Crosshair ===
+__dlog("[12] ESP OK")
+
+-- Custom Crosshair
 local chGui = Instance.new("ScreenGui")
 chGui.Name = "DeNsI_Crosshair"
 chGui.ResetOnSpawn = false
@@ -590,10 +539,6 @@ local chDot    = mkCH(Vector2.new(0.5, 0.5), UDim2.new(0, 0, 0, 0))
 RunService.RenderStepped:Connect(function()
     chCont.Visible = Cfg.CrosshairEnabled
     if not Cfg.CrosshairEnabled then return end
-
-    local col = Cfg.CrosshairColor
-    if Cfg.CrosshairRainbow then col = Color3.fromHSV((tick() % 5) / 5, 1, 1) end
-
     local s, g, t = Cfg.CrosshairSize, Cfg.CrosshairGap, Cfg.CrosshairThick
     chTop.Size = UDim2.new(0, t, 0, s); chTop.Position = UDim2.new(0, 0, 0, -g)
     chBottom.Size = UDim2.new(0, t, 0, s); chBottom.Position = UDim2.new(0, 0, 0, g)
@@ -601,13 +546,14 @@ RunService.RenderStepped:Connect(function()
     chRight.Size = UDim2.new(0, s, 0, t); chRight.Position = UDim2.new(0, g, 0, 0)
     chDot.Size = UDim2.new(0, math.max(t, 2), 0, math.max(t, 2))
     chDot.Visible = Cfg.CrosshairDot
-
     for _, f in ipairs({chTop, chBottom, chLeft, chRight, chDot}) do
-        f.BackgroundColor3 = col
+        f.BackgroundColor3 = Cfg.CrosshairColor
     end
 end)
 
--- === GUI ===
+__dlog("[13] Crosshair OK")
+
+-- GUI
 local function buildGUI()
     local gui = Instance.new("ScreenGui")
     gui.Name = "DeNsI_GUI"
@@ -617,7 +563,7 @@ local function buildGUI()
     gui.DisplayOrder = 100
     gui.Parent = LP:WaitForChild("PlayerGui")
 
-    local W, H = 480, 360
+    local W, H = 460, 340
     local main = Instance.new("Frame")
     main.Size = UDim2.new(0, W, 0, H)
     main.Position = UDim2.new(0.5, -W/2, 0.5, -H/2)
@@ -642,7 +588,7 @@ local function buildGUI()
     titleLbl.Size = UDim2.new(1, -100, 1, 0)
     titleLbl.Position = UDim2.new(0, 14, 0, 0)
     titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "DeNsI v3"
+    titleLbl.Text = "DeNsI v4"
     titleLbl.TextColor3 = Color3.fromRGB(240,240,250)
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 14
@@ -665,7 +611,7 @@ local function buildGUI()
     closeC.Parent = closeBtn
 
     local sidebar = Instance.new("ScrollingFrame")
-    sidebar.Size = UDim2.new(0, 110, 1, -42)
+    sidebar.Size = UDim2.new(0, 105, 1, -42)
     sidebar.Position = UDim2.new(0, 6, 0, 40)
     sidebar.BackgroundColor3 = Color3.fromRGB(20,20,24)
     sidebar.BorderSizePixel = 0
@@ -690,8 +636,8 @@ local function buildGUI()
     sbP.Parent = sidebar
 
     local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -126, 1, -48)
-    content.Position = UDim2.new(0, 120, 0, 42)
+    content.Size = UDim2.new(1, -121, 1, -48)
+    content.Position = UDim2.new(0, 115, 0, 42)
     content.BackgroundColor3 = Color3.fromRGB(26,26,32)
     content.BorderSizePixel = 0
     content.Parent = main
@@ -781,8 +727,7 @@ local function buildGUI()
     local function section(parent, txt)
         local s = Instance.new("TextLabel")
         s.Size = UDim2.new(1, 0, 0, 18)
-        s.BackgroundTransparency = 1
-        s.Text = string.upper(txt)
+        s.BackgroundTransparency = 1        s.Text = string.upper(txt)
         s.TextColor3 = Cfg.GuiColor
         s.Font = Enum.Font.GothamBold
         s.TextSize = 10
@@ -976,7 +921,6 @@ local function buildGUI()
         end
     end
 
-    -- ESP вкладка
     local espTab = makeTab("ESP")
     section(espTab, "Основное")
     toggle(espTab, "ESP Enabled", "ESPEnabled")
@@ -987,11 +931,9 @@ local function buildGUI()
     toggle(espTab, "Distance", "ESPDistance")
     toggle(espTab, "Tracer", "ESPTracer")
     section(espTab, "Цвета")
-    colorRow(espTab, "Box Color", function(c) Cfg.ESPBoxColorA = c end)
+    colorRow(espTab, "Box Color", function(c) Cfg.ESPBoxColor = c end)
     colorRow(espTab, "Name Color", function(c) Cfg.ESPNameColor = c end)
-    colorRow(espTab, "Tracer Color", function(c) Cfg.ESPTracerColor = c end)
 
-    -- AIM вкладка
     local aimTab = makeTab("AIM")
     section(aimTab, "Silent Aim")
     toggle(aimTab, "Silent Aim", "SilentEnabled")
@@ -1001,19 +943,17 @@ local function buildGUI()
     slider(aimTab, "FOV", "SilentFOV", 20, 500, 10)
     slider(aimTab, "Distance", "SilentMaxDistance", 100, 3000, 100)
     slider(aimTab, "Hit Chance", "SilentHitChance", 1, 100, 1)
-    section(aimTab, "Aimbot")
-    toggle(aimTab, "Aimbot (E)", "AimbotEnabled")
+    section(aimTab, "Aimbot (E)")
+    toggle(aimTab, "Aimbot", "AimbotEnabled")
     toggle(aimTab, "Team Check", "AimbotTeamCheck")
     toggle(aimTab, "Prediction", "AimbotPrediction")
     slider(aimTab, "Smooth", "AimbotSmooth", 0.5, 20, 0.5)
     slider(aimTab, "FOV", "AimbotFOV", 10, 500, 10)
 
-    -- VISUAL вкладка
     local visTab = makeTab("VISUAL")
     section(visTab, "Crosshair")
     toggle(visTab, "Crosshair", "CrosshairEnabled")
     toggle(visTab, "Dot", "CrosshairDot")
-    toggle(visTab, "Rainbow", "CrosshairRainbow")
     slider(visTab, "Size", "CrosshairSize", 1, 50, 1)
     slider(visTab, "Gap", "CrosshairGap", 0, 30, 1)
     slider(visTab, "Thickness", "CrosshairThick", 1, 10, 1)
@@ -1024,11 +964,9 @@ local function buildGUI()
     toggle(visTab, "Third Person", "ThirdPerson")
     slider(visTab, "Distance", "ThirdPersonDist", 5, 50, 1)
 
-    -- MISC вкладка
     local miscTab = makeTab("MISC")
     section(miscTab, "Movement")
     toggle(miscTab, "Auto Bhop", "AutoBhop")
-    slider(miscTab, "Bhop Speed", "BhopSpeed", 5, 30, 1)
     section(miscTab, "Effects")
     toggle(miscTab, "Anti-Flashbang", "Antiflashbang")
     section(miscTab, "Skybox")
@@ -1044,8 +982,9 @@ local function buildGUI()
 end
 
 buildGUI()
+__dlog("[14] GUI OK")
 
--- === Cleanup ===
+-- Cleanup
 _G.DeNsI_Cleanup = function()
     for _, d in pairs(ESPData) do
         pcall(function() d.outline:Remove() end)
@@ -1056,24 +995,20 @@ _G.DeNsI_Cleanup = function()
     end
 end
 
-print("[DeNsI] v3 загружен успешно")
-print("[DeNsI] Silent Aim: " .. (Aim.Ready and "OK" or "FAIL"))
-print("[DeNsI] Bullet module: " .. (Bullet and "OK" or "FAIL"))
--- === КОНЕЦ ТВОЕГО СКРИПТА ===
+__dlog("[15] Всё загружено успешно")
 
 end)  -- конец pcall
 
 if not __ok then
-    __log("[CRASH] " .. tostring(__err), true)
-    warn("[DeNsI] CRASH: " .. tostring(__err))
+    __dlog("[CRASH] " .. tostring(__err), true)
 else
-    __log("[OK] Скрипт загружен без ошибок", false)
+    __dlog("[OK] Скрипт загружен без ошибок")
 end
 
--- Автоудаление панели через 30 сек, если ошибок не было
+-- Автоудаление панели через 20 сек, если ошибок не было
 task.spawn(function()
-    task.wait(30)
-    if not __hasError then
-        pcall(function() __gui:Destroy() end)
+    task.wait(20)
+    if not __dhasErr then
+        pcall(function() __dgui:Destroy() end)
     end
 end)
