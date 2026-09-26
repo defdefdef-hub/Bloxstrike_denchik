@@ -1,4 +1,4 @@
---[[ DeNsI v4 — Blox Strike — Arceus X Neo — single file ]]
+--[[ DeNsI v5 — Blox Strike — Arceus X Neo ]]
 
 -- === Диагностическая панель ===
 local __dgui = Instance.new("ScreenGui")
@@ -22,7 +22,7 @@ local __dtitle = Instance.new("TextLabel")
 __dtitle.Size = UDim2.new(1, 0, 0, 24)
 __dtitle.BackgroundColor3 = Color3.fromRGB(100, 130, 255)
 __dtitle.BorderSizePixel = 0
-__dtitle.Text = "  DeNsI v4 — загрузка"
+__dtitle.Text = "  DeNsI v5 — загрузка"
 __dtitle.TextColor3 = Color3.new(1,1,1)
 __dtitle.Font = Enum.Font.GothamBold
 __dtitle.TextSize = 14
@@ -64,7 +64,7 @@ local __ok, __err = pcall(function()
 
 __dlog("[1] Старт")
 
--- Проверка окружения БЕЗ return
+-- Проверка окружения
 local __env_ok = true
 if not Drawing or not Drawing.new then __dlog("Нет Drawing", true); __env_ok = false end
 if not hookfunction then __dlog("Нет hookfunction", true); __env_ok = false end
@@ -383,7 +383,7 @@ end)
 
 __dlog("[10] Anti-Flash OK")
 
--- Camera FOV / Third Person
+-- Camera
 RunService.RenderStepped:Connect(function()
     if not Cam then return end
     if Cfg.CustomFovToggle then Cam.FieldOfView = Cfg.FovAmount end
@@ -588,7 +588,7 @@ local function buildGUI()
     titleLbl.Size = UDim2.new(1, -100, 1, 0)
     titleLbl.Position = UDim2.new(0, 14, 0, 0)
     titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "DeNsI v4"
+    titleLbl.Text = "DeNsI v5"
     titleLbl.TextColor3 = Color3.fromRGB(240,240,250)
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 14
@@ -727,7 +727,8 @@ local function buildGUI()
     local function section(parent, txt)
         local s = Instance.new("TextLabel")
         s.Size = UDim2.new(1, 0, 0, 18)
-        s.BackgroundTransparency = 1        s.Text = string.upper(txt)
+        s.BackgroundTransparency = 1
+        s.Text = string.upper(txt)
         s.TextColor3 = Cfg.GuiColor
         s.Font = Enum.Font.GothamBold
         s.TextSize = 10
@@ -974,8 +975,93 @@ local function buildGUI()
     section(miscTab, "Тема")
     colorRow(miscTab, "Цвет GUI", function(c) Cfg.GuiColor = c end)
 
+    -- === Кнопка возврата ===
+    local reopenBtn = Instance.new("TextButton")
+    reopenBtn.Name = "DeNsI_ReopenBtn"
+    reopenBtn.Size = UDim2.new(0, 44, 0, 44)
+    reopenBtn.Position = UDim2.new(0, 14, 0, 100)
+    reopenBtn.BackgroundColor3 = Cfg.GuiColor
+    reopenBtn.BorderSizePixel = 0
+    reopenBtn.Text = "D"
+    reopenBtn.TextColor3 = Color3.new(1,1,1)
+    reopenBtn.Font = Enum.Font.GothamBold
+    reopenBtn.TextSize = 20
+    reopenBtn.AutoButtonColor = false
+    reopenBtn.Visible = false
+    reopenBtn.Active = true
+    reopenBtn.Parent = gui
+
+    local rc = Instance.new("UICorner")
+    rc.CornerRadius = UDim.new(1, 0)
+    rc.Parent = reopenBtn
+
+    local rstroke = Instance.new("UIStroke")
+    rstroke.Color = Color3.fromRGB(255,255,255)
+    rstroke.Thickness = 2
+    rstroke.Transparency = 0.4
+    rstroke.Parent = reopenBtn
+
+    -- Перетаскивание
+    local dragStart, startPos, isDragging, moved = nil, nil, false, false
+    reopenBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            moved = false
+            dragStart = input.Position
+            startPos = reopenBtn.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            if delta.Magnitude > 5 then moved = true end
+            reopenBtn.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = false
+        end
+    end)
+
+    -- Свернуть/развернуть
+    local isMinimized = false
+
+    local function minimize()
+        if isMinimized then return end
+        isMinimized = true
+        main.Visible = false
+        reopenBtn.Visible = true
+    end
+
+    local function maximize()
+        if not isMinimized then return end
+        isMinimized = false
+        main.Visible = true
+        reopenBtn.Visible = false
+    end
+
+    reopenBtn.MouseButton1Click:Connect(function()
+        if not moved then
+            maximize()
+        end
+    end)
+
     closeBtn.MouseButton1Click:Connect(function()
-        gui.Enabled = false
+        minimize()
+    end)
+
+    UIS.InputBegan:Connect(function(input, gp)
+        if gp then return end
+        if input.KeyCode == Enum.KeyCode.LeftAlt then
+            if isMinimized then maximize() else minimize() end
+        end
     end)
 
     switchTab("ESP")
@@ -1005,7 +1091,6 @@ else
     __dlog("[OK] Скрипт загружен без ошибок")
 end
 
--- Автоудаление панели через 20 сек, если ошибок не было
 task.spawn(function()
     task.wait(20)
     if not __dhasErr then
