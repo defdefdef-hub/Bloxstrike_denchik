@@ -2645,16 +2645,99 @@ local function buildGUI()
     toggle(effTab, "Anti-Smoke", "Antismoke")
 
     -- SKINS
-    local skinsTab = makeTab("SKINS")
-    section(skinsTab, "Skin Changer")
-    toggle(skinsTab, "Включить скины", "SkinChangerEnabled")
-    section(skinsTab, "Нож")
-    toggle(skinsTab, "Включить нож", "KnifeChangerEnabled")
-    optionRow(skinsTab, "Модель", "KnifeChangerModel", {"Karambit","Butterfly Knife","Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife","Stiletto Knife"})
-    section(skinsTab, "Перчатки")
-    toggle(skinsTab, "Включить перчатки", "GloveChangerEnabled")
-    local GM = {}; for k in pairs(SD.GloveSelections) do GM[#GM+1] = k end; table.sort(GM)
-    if #GM > 0 then optionRow(skinsTab, "Модель", "GloveChangerModel", GM) end
+local skinsTab = makeTab("SKINS")
+
+-- Функция для расширенного списка (широкие кнопки, без обрезки)
+local function skinDropdown(parent, title, options, getValue, setValue)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 62)
+    row.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    row.BorderSizePixel = 0
+    row.Parent = parent
+    reg(row, "bgInput")
+    local rc = Instance.new("UICorner"); rc.CornerRadius = UDim.new(0,6); rc.Parent = row
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Size = UDim2.new(1,-20,0,16); titleLbl.Position = UDim2.new(0,12,0,4)
+    titleLbl.BackgroundTransparency = 1; titleLbl.Text = title
+    titleLbl.TextColor3 = Color3.fromRGB(225,225,235); titleLbl.Font = Enum.Font.Gotham
+    titleLbl.TextSize = 11; titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    titleLbl.Parent = row
+    local holder = Instance.new("ScrollingFrame")
+    holder.Size = UDim2.new(1,-24,0,32); holder.Position = UDim2.new(0,12,0,24)
+    holder.BackgroundTransparency = 1; holder.BorderSizePixel = 0
+    holder.ScrollBarThickness = 0
+    holder.CanvasSize = UDim2.new(0, #options * 84, 0, 0)
+    holder.ScrollingDirection = Enum.ScrollingDirection.X
+    holder.Parent = row
+    local hl = Instance.new("UIListLayout")
+    hl.FillDirection = Enum.FillDirection.Horizontal; hl.Padding = UDim.new(0,4); hl.Parent = holder
+    local btns = {}
+    local function refresh()
+        local cur = getValue()
+        for _, b in ipairs(btns) do
+            if b.Val == cur then
+                b.Btn.BackgroundColor3 = Cfg.GuiColor; b.Btn.TextColor3 = Color3.new(1,1,1)
+            else
+                b.Btn.BackgroundColor3 = Color3.fromRGB(45,45,56); b.Btn.TextColor3 = Color3.fromRGB(170,170,190)
+            end
+        end
+    end
+    for _, v in ipairs(options) do
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 80, 1, 0); b.BackgroundColor3 = Color3.fromRGB(45,45,56)
+        b.BorderSizePixel = 0; b.Text = tostring(v)
+        b.TextColor3 = Color3.fromRGB(170,170,190); b.Font = Enum.Font.GothamBold
+        b.TextSize = 9; b.AutoButtonColor = false; b.Parent = holder
+        b.TextWrapped = true
+        local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(0,5); bc.Parent = b
+        table.insert(btns, {Btn=b, Val=v})
+        b.MouseButton1Click:Connect(function()
+            setValue(v); refresh()
+        end)
+    end
+    refresh()
+end
+
+section(skinsTab, "Оружие")
+toggle(skinsTab, "Включить скины", "SkinChangerEnabled")
+
+local weaponOrder = {"AK-47","M4A4","M4A1-S","AWP","AUG","FAMAS","Glock","USP-S","P250","Desert Eagle"}
+for _, w in ipairs(weaponOrder) do
+    local skins = SD.SkinSelections[w]
+    if skins then
+        skinDropdown(skinsTab, w, skins,
+            function() return Cfg.SkinChangerSkins[w] or skins[1] end,
+            function(v) Cfg.SkinChangerSkins[w] = v end)
+    end
+end
+
+section(skinsTab, "Нож")
+toggle(skinsTab, "Включить нож", "KnifeChangerEnabled")
+optionRow(skinsTab, "Модель ножа", "KnifeChangerModel", {"Karambit","Butterfly Knife","Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife","Stiletto Knife"})
+
+local KM = {"Karambit","Butterfly Knife","Flip Knife","Gut Knife","M9 Bayonet","Skeleton Knife","Stiletto Knife"}
+for _, kn in ipairs(KM) do
+    local ks = SD.SkinSelections[kn]
+    if ks then
+        skinDropdown(skinsTab, kn .. " скин", ks,
+            function() return Cfg.SkinChangerSkins[kn] or "Vanilla" end,
+            function(v) Cfg.SkinChangerSkins[kn] = v end)
+    end
+end
+
+section(skinsTab, "Перчатки")
+toggle(skinsTab, "Включить перчатки", "GloveChangerEnabled")
+local GM = {}; for k in pairs(SD.GloveSelections) do GM[#GM+1] = k end; table.sort(GM)
+if #GM > 0 then optionRow(skinsTab, "Модель перчаток", "GloveChangerModel", GM) end
+
+for _, gn in ipairs(GM) do
+    local gs = SD.GloveSelections[gn]
+    if gs then
+        skinDropdown(skinsTab, gn .. " скин", gs,
+            function() return Cfg.GloveChangerGloves[gn] or "Default" end,
+            function(v) Cfg.GloveChangerGloves[gn] = v end)
+    end
+    end
 
     -- VISUALS
     local visualTab = makeTab("VISUALS")
